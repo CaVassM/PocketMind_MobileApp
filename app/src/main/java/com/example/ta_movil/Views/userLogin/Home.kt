@@ -45,7 +45,7 @@ fun Home(onNext: () -> Unit) {
     // Aquí defines las imágenes y contenido para cada página
     val pages = listOf(
         pageModel(
-            image = R.drawable.piggy_2, // Tu imagen del cochinito
+            image = R.drawable.piggy_2, // Primera imagen
             title = "Empieza hoy el camino hacia tus sueños",
             description = "El futuro empieza con una idea... y una moneda"
         ),
@@ -91,7 +91,7 @@ fun Home(onNext: () -> Unit) {
         )
         Spacer(modifier = Modifier.size(85.dp))
         // Mandamos la funcion callback onNext
-        ButtonApp(onNext)
+        ButtonApp(onNext, "Ahorra ya")
 
     }
 
@@ -162,8 +162,6 @@ fun PageContent(page: pageModel) {
         // Titulo
         Text(
             text = page.title,
-            modifier = Modifier
-                .padding(Dimens.paddingLarge),
             fontSize = 22.sp,
             textAlign = TextAlign.Center,
             fontFamily = Nunito,
@@ -172,6 +170,7 @@ fun PageContent(page: pageModel) {
 
         )
         // Descripcion
+        Spacer(modifier = Modifier.size(32.dp))
         Text(
             text = page.description,
             fontSize = 13.sp,
