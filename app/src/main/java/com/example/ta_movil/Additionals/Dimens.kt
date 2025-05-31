@@ -9,6 +9,6 @@ import androidx.compose.ui.unit.sp
 object Dimens {
     val paddingSmall = 8.dp
     val paddingMedium = 16.dp
-    val paddingLarge = 28.dp
+    val paddingLarge = 32.dp
     val imageSize = 250.dp
 }

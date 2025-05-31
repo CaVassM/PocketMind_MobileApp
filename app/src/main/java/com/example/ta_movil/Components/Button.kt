@@ -14,7 +14,7 @@ import com.example.ta_movil.ui.theme.Nunito
 
 
 @Composable
-fun ButtonApp(onNext: () -> Unit) {
+fun ButtonApp(onNext: () -> Unit, string: String) {
     // El onClick mandará a la pestaña del inicio.
     Button(
         onClick = onNext,
@@ -24,7 +24,7 @@ fun ButtonApp(onNext: () -> Unit) {
         )
     ){
         Text(
-            text = "Ahorra ya",
+            text = string,
             fontFamily = Nunito,
             fontWeight = FontWeight.Bold,
             fontSize = 22.sp,
