@@ -58,13 +58,14 @@ fun NavGraphBuilder.authNavigation(navController: NavHostController) {
 
     composable("ForgotPassword"){
         ForgotPassword(
-            onNext = { navController.navigate("VerifyEmail") }
+            navController = navController,
+            onSucess = { navController.navigate("VerifyEmail") }
         )
     }
 
     composable("VerifyEmail"){
         VerifyEmail(
-            onNext = { navController.navigate("EstablishPassword") }
+            onSucess = { navController.navigate("EstablishPassword") }
         )
     }
 

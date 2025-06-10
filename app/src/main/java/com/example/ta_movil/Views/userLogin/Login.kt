@@ -2,6 +2,7 @@ package com.example.ta_movil.Views.userLogin
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -112,7 +113,10 @@ fun LoginContent(onSuccess: () -> Unit, onCreateAccount: () -> Unit, onForgotPas
             fontSize = 13.sp,
             fontWeight = FontWeight.Bold,
             textDecoration = TextDecoration.Underline,
-            color = Color(0xFF513C31)
+            color = Color(0xFF513C31),
+            modifier = Modifier
+                .clickable(onClick = onForgotPassword) // Esto hace que sea clickable
+                .padding(4.dp) // Pequeño padding para mejor UX
         )
         Spacer(modifier = Modifier.size(30.dp))
         ButtonApp(onSuccess, "Ingresar")

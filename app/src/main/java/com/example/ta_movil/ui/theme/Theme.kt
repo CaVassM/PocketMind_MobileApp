@@ -9,7 +9,9 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
 
 private val DarkColorScheme = darkColorScheme(
     primary = Purple80,
@@ -32,6 +34,21 @@ private val LightColorScheme = lightColorScheme(
     onSurface = Color(0xFF1C1B1F),
     */
 )
+
+object AppTheme {
+    // Colores
+    val primaryBackground = Color(0xFFDEB887) // Fondo beige
+    val primaryText = Color(0xFF513C31) // Texto marrón oscuro
+    val white = Color.White
+
+    // Dimensiones
+    val paddingLarge = 24.dp
+    val paddingMedium = 16.dp
+    val paddingSmall = 8.dp
+    val cornerRadius = 16.dp
+    val buttonHeight = 48.dp
+}
+
 
 @Composable
 fun TA_MOVILTheme(
