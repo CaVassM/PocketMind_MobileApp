@@ -87,7 +87,7 @@ fun VerifyEmail(
 
         // Botón (estilo consistente)
         Spacer(modifier = Modifier.size(30.dp))
-        ButtonApp(onSucess, "Verificar  \n Identidad")
+        ButtonApp(onSucess, "  Verificar  \n Identidad")
     }
 }
 

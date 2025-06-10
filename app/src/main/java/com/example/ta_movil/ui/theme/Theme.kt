@@ -36,6 +36,8 @@ private val LightColorScheme = lightColorScheme(
 )
 
 object AppTheme {
+    val primaryColor = Color(0xFF4CAF50)
+
     // Colores
     val primaryBackground = Color(0xFFDEB887) // Fondo beige
     val primaryText = Color(0xFF513C31) // Texto marrón oscuro
