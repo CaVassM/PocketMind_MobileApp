@@ -2,7 +2,6 @@ package com.example.ta_movil.Views.userLogin
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,11 +15,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.Divider
-import androidx.compose.material.LocalContentColor
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Warning
-import androidx.compose.material.icons.rounded.Favorite
-import androidx.compose.material.icons.rounded.FavoriteBorder
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
@@ -37,17 +31,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.example.ta_movil.Additionals.Dimens
-import com.example.ta_movil.Components.ButtonApp
+import com.example.ta_movil.Components.preLogin.ButtonApp
 import com.example.ta_movil.R
-import com.example.ta_movil.ui.theme.Nunito
+import com.example.ta_movil.Components.preLogin.ClickableText
 
 @Composable
 fun Login(onSuccess: () -> Unit, onCreateAccount: () -> Unit, onForgotPassword: () -> Unit) {
@@ -99,25 +90,9 @@ fun LoginContent(onSuccess: () -> Unit, onCreateAccount: () -> Unit, onForgotPas
         Spacer(modifier = Modifier.size(16.dp))
         PasswordField()
         Spacer(modifier = Modifier.size(48.dp))
-        Text(
-            text = "¿No tiene cuenta?",
-            fontFamily = Nunito,
-            fontSize = 13.sp,
-            fontWeight = FontWeight.Bold,
-            textDecoration = TextDecoration.Underline,
-            color = Color(0xFF513C31)
-        )
-        Text(
-            text = "¿Olvidó su contraseña?",
-            fontFamily = Nunito,
-            fontSize = 13.sp,
-            fontWeight = FontWeight.Bold,
-            textDecoration = TextDecoration.Underline,
-            color = Color(0xFF513C31),
-            modifier = Modifier
-                .clickable(onClick = onForgotPassword) // Esto hace que sea clickable
-                .padding(4.dp) // Pequeño padding para mejor UX
-        )
+        ClickableText(text = "¿No tiene cuenta?", onClick = onCreateAccount)
+        Spacer(modifier = Modifier.size(4.dp))
+        ClickableText(text = "¿Olvidó su contraseña?", onClick = onForgotPassword)
         Spacer(modifier = Modifier.size(30.dp))
         ButtonApp(onSuccess, "Ingresar")
 
@@ -174,9 +149,16 @@ fun EmailField() {
         singleLine = true,
         maxLines = 1,
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-        colors = TextFieldDefaults.colors(
-            unfocusedContainerColor = Color.White,
+        colors = TextFieldDefaults.colors( // Usa .colors en lugar de .textFieldColors para M3
+            // --- Para quitar la línea cuando está enfocado ---
+            focusedIndicatorColor = Color.Transparent,
+            // --- Para quitar la línea cuando no está enfocado pero tiene contenido ---
+            unfocusedIndicatorColor = Color.Transparent,
+            // --- Para quitar la línea cuando está deshabilitado ---
+            disabledIndicatorColor = Color.Transparent,
+            // --- Para cambiar el color del fondo ---
             focusedContainerColor = Color.White,
+            unfocusedContainerColor = Color.White
         )
     )
 }
@@ -212,9 +194,16 @@ fun PasswordField() {
 
             }
         },
-        colors = TextFieldDefaults.colors(
-            unfocusedContainerColor = Color.White,
-            focusedContainerColor = Color.White
+        colors = TextFieldDefaults.colors( // Usa .colors en lugar de .textFieldColors para M3
+            // --- Para quitar la línea cuando está enfocado ---
+            focusedIndicatorColor = Color.Transparent,
+            // --- Para quitar la línea cuando no está enfocado pero tiene contenido ---
+            unfocusedIndicatorColor = Color.Transparent,
+            // --- Para quitar la línea cuando está deshabilitado ---
+            disabledIndicatorColor = Color.Transparent,
+            // --- Para cambiar el color del fondo ---
+            focusedContainerColor = Color.White,
+            unfocusedContainerColor = Color.White
         )
     )
 
