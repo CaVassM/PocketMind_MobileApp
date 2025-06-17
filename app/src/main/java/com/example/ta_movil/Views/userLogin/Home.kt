@@ -28,7 +28,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.ta_movil.Additionals.Dimens
-import com.example.ta_movil.Components.ButtonApp
+import com.example.ta_movil.Components.preLogin.ButtonApp
 import com.example.ta_movil.Model.pagesInit.pageModel
 import com.example.ta_movil.ui.theme.Nunito
 

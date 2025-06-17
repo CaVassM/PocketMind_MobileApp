@@ -38,7 +38,8 @@ fun NavGraphBuilder.authNavigation(navController: NavHostController) {
     /////////////// Flujo crear cuenta ///////////////////
     composable("CreateAccount"){
         CreateAccount(
-            onNext = { navController.navigate("VerifyIdentity") }
+            onNext = { navController.navigate("VerifyIdentity") },
+            onPrev = { navController.navigate("Login") }
         )
     }
 
@@ -59,19 +60,19 @@ fun NavGraphBuilder.authNavigation(navController: NavHostController) {
     composable("ForgotPassword"){
         ForgotPassword(
             navController = navController,
-            onSucess = { navController.navigate("VerifyEmail") }
+            onSuccess = { navController.navigate("VerifyEmail") }
         )
     }
 
     composable("VerifyEmail"){
         VerifyEmail(
-            onSucess = { navController.navigate("EstablishPassword") }
+            onSuccess = { navController.navigate("EstablishPassword") }
         )
     }
 
     composable("EstablishPassword"){
         EstablishPassword(
-            onSucess = { navController.navigate("PasswordSuccess") }
+            onSuccess = { navController.navigate("PasswordSuccess") }
         )
     }
 

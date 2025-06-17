@@ -24,13 +24,13 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.ta_movil.Components.ButtonApp
+import com.example.ta_movil.Components.preLogin.ButtonApp
 import com.example.ta_movil.ui.theme.AppTheme
 import com.example.ta_movil.ui.theme.Nunito
 
 @Composable
 fun VerifyEmail(
-    onSucess: () -> Unit
+    onSuccess: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -74,11 +74,16 @@ fun VerifyEmail(
             label = { Text("Código de 6 dígitos") },
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(AppTheme.cornerRadius),
-            colors = TextFieldDefaults.colors(
-                unfocusedContainerColor = AppTheme.white,
-                focusedContainerColor = AppTheme.white,
-                unfocusedLabelColor = AppTheme.primaryText,
-                focusedLabelColor = AppTheme.primaryText
+            colors = TextFieldDefaults.colors( // Usa .colors en lugar de .textFieldColors para M3
+                // --- Para quitar la línea cuando está enfocado ---
+                focusedIndicatorColor = Color.Transparent,
+                // --- Para quitar la línea cuando no está enfocado pero tiene contenido ---
+                unfocusedIndicatorColor = Color.Transparent,
+                // --- Para quitar la línea cuando está deshabilitado ---
+                disabledIndicatorColor = Color.Transparent,
+                // --- Para cambiar el color del fondo ---
+                focusedContainerColor = Color.White,
+                unfocusedContainerColor = Color.White
             ),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
         )
@@ -87,7 +92,7 @@ fun VerifyEmail(
 
         // Botón (estilo consistente)
         Spacer(modifier = Modifier.size(30.dp))
-        ButtonApp(onSucess, "  Verificar  \n Identidad")
+        ButtonApp(onSuccess, "  Verificar  \n Identidad")
     }
 }
 

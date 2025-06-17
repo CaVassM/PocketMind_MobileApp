@@ -24,14 +24,14 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.ta_movil.Components.ButtonApp
+import com.example.ta_movil.Components.preLogin.ButtonApp
 import com.example.ta_movil.ui.theme.AppTheme
 import com.example.ta_movil.ui.theme.Nunito
 
 
 @Composable
 fun EstablishPassword(
-    onSucess: () -> Unit
+    onSuccess: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -71,11 +71,16 @@ fun EstablishPassword(
             label = { Text("Nueva Contraseña") },
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(AppTheme.cornerRadius),
-            colors = TextFieldDefaults.colors(
-                unfocusedContainerColor = AppTheme.white,
-                focusedContainerColor = AppTheme.white,
-                unfocusedLabelColor = AppTheme.primaryText,
-                focusedLabelColor = AppTheme.primaryText
+            colors = TextFieldDefaults.colors( // Usa .colors en lugar de .textFieldColors para M3
+                // --- Para quitar la línea cuando está enfocado ---
+                focusedIndicatorColor = Color.Transparent,
+                // --- Para quitar la línea cuando no está enfocado pero tiene contenido ---
+                unfocusedIndicatorColor = Color.Transparent,
+                // --- Para quitar la línea cuando está deshabilitado ---
+                disabledIndicatorColor = Color.Transparent,
+                // --- Para cambiar el color del fondo ---
+                focusedContainerColor = Color.White,
+                unfocusedContainerColor = Color.White
             ),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
         )
@@ -96,11 +101,16 @@ fun EstablishPassword(
             label = { Text("Confirmar contraseña") },
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(AppTheme.cornerRadius),
-            colors = TextFieldDefaults.colors(
-                unfocusedContainerColor = AppTheme.white,
-                focusedContainerColor = AppTheme.white,
-                unfocusedLabelColor = AppTheme.primaryText,
-                focusedLabelColor = AppTheme.primaryText
+            colors = TextFieldDefaults.colors( // Usa .colors en lugar de .textFieldColors para M3
+                // --- Para quitar la línea cuando está enfocado ---
+                focusedIndicatorColor = Color.Transparent,
+                // --- Para quitar la línea cuando no está enfocado pero tiene contenido ---
+                unfocusedIndicatorColor = Color.Transparent,
+                // --- Para quitar la línea cuando está deshabilitado ---
+                disabledIndicatorColor = Color.Transparent,
+                // --- Para cambiar el color del fondo ---
+                focusedContainerColor = Color.White,
+                unfocusedContainerColor = Color.White
             ),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
         )
@@ -109,6 +119,6 @@ fun EstablishPassword(
 
         // Botón (estilo consistente)
         Spacer(modifier = Modifier.size(30.dp))
-        ButtonApp(onSucess, "   Cambiar  \n Contraseña")
+        ButtonApp(onSuccess, "   Cambiar  \n Contraseña")
     }
 }
