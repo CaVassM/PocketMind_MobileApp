@@ -67,7 +67,7 @@ fun PasswordSuccess(onSucess: () -> Unit) {
         Spacer(modifier = Modifier.height(40.dp))
 
         Text(
-            text = "Tu contraseña ha sido actualizada",
+            text = "Se ha enviado un enlace a tu correo para restablecer tu contraseña",
             fontFamily = Nunito,
             fontSize = 18.sp,
             fontWeight = FontWeight.Bold,
@@ -79,7 +79,7 @@ fun PasswordSuccess(onSucess: () -> Unit) {
 
         // Botón para ir al inicio de sesión
         ButtonApp(
-            onSucess,"Iniciar Sesión"
+            onSucess,"Iniciar Sesión", true
         )
     }
 }

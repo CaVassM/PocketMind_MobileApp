@@ -91,7 +91,7 @@ fun Home(onNext: () -> Unit) {
         )
         Spacer(modifier = Modifier.size(85.dp))
         // Mandamos la funcion callback onNext
-        ButtonApp(onNext, "Ahorra ya")
+        ButtonApp(onNext, "Ahorra ya", true) // True pues, no cuenta con ningun requerimiento
 
     }
 

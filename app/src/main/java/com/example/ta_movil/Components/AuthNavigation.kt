@@ -3,17 +3,25 @@ package com.example.ta_movil.Components
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.composable
+import com.example.ta_movil.ViewModels.AuthViewModel
+import com.example.ta_movil.ViewModels.ForgotViewModel
+import com.example.ta_movil.ViewModels.RegisterViewModel
 import com.example.ta_movil.Views.userLogin.Home
 import com.example.ta_movil.Views.userLogin.Login
 import com.example.ta_movil.Views.userLogin.createAccount.CreateAccount
 import com.example.ta_movil.Views.userLogin.createAccount.CreateSuccess
 import com.example.ta_movil.Views.userLogin.createAccount.VerifyIdentity
-import com.example.ta_movil.Views.userLogin.forgotPassword.EstablishPassword
 import com.example.ta_movil.Views.userLogin.forgotPassword.ForgotPassword
 import com.example.ta_movil.Views.userLogin.forgotPassword.PasswordSuccess
-import com.example.ta_movil.Views.userLogin.forgotPassword.VerifyEmail
+import com.google.firebase.auth.FirebaseAuth
 
-fun NavGraphBuilder.authNavigation(navController: NavHostController) {
+fun NavGraphBuilder.authNavigation(
+    navController: NavHostController,
+    auth: FirebaseAuth,
+    loginViewModel: AuthViewModel,
+    registerViewModel: RegisterViewModel,
+    forgotViewModel: ForgotViewModel
+) {
     // Declaramos los flows a utilizar.
     composable("Home"){
         Home(
@@ -26,7 +34,9 @@ fun NavGraphBuilder.authNavigation(navController: NavHostController) {
         Login(
             onSuccess = { navController.navigate("Dashboard") },
             onCreateAccount = { navController.navigate("CreateAccount") },
-            onForgotPassword = { navController.navigate("ForgotPassword") }
+            onForgotPassword = { navController.navigate("ForgotPassword") },
+            auth = auth,
+            loginViewModel = loginViewModel
         )
     }
 
@@ -39,13 +49,17 @@ fun NavGraphBuilder.authNavigation(navController: NavHostController) {
     composable("CreateAccount"){
         CreateAccount(
             onNext = { navController.navigate("VerifyIdentity") },
-            onPrev = { navController.navigate("Login") }
+            onPrev = { navController.navigate("Login") },
+            auth = auth,
+            registerViewModel = registerViewModel
         )
     }
 
     composable("VerifyIdentity"){
         VerifyIdentity(
-            onSuccess = { navController.navigate("CreateSuccess") }
+            onSuccess = { navController.navigate("CreateSuccess") },
+            auth = auth,
+            registerViewModel = registerViewModel
         )
     }
 
@@ -60,21 +74,12 @@ fun NavGraphBuilder.authNavigation(navController: NavHostController) {
     composable("ForgotPassword"){
         ForgotPassword(
             navController = navController,
-            onSuccess = { navController.navigate("VerifyEmail") }
+            onSuccess = { navController.navigate("PasswordSuccess") },
+            forgotViewModel = forgotViewModel,
+            auth = auth
         )
     }
 
-    composable("VerifyEmail"){
-        VerifyEmail(
-            onSuccess = { navController.navigate("EstablishPassword") }
-        )
-    }
-
-    composable("EstablishPassword"){
-        EstablishPassword(
-            onSuccess = { navController.navigate("PasswordSuccess") }
-        )
-    }
 
     composable("PasswordSuccess") {
         PasswordSuccess(

@@ -21,7 +21,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.ta_movil.Components.preLogin.ButtonApp
 import com.example.ta_movil.ui.theme.AppTheme
-import com.example.ta_movil.ui.theme.Nunito
+
 
 @Composable
 fun CreateSuccess(onNext: () -> Unit) {
@@ -79,7 +79,7 @@ fun CreateSuccess(onNext: () -> Unit) {
 
         // Botón para ir al inicio de sesión
         ButtonApp(
-            onNext = onNext, string = "¡Bienvenido a\nnuestra familia!"
+            onNext = onNext, string = "¡Bienvenido a\nnuestra familia!", true
         )
     }
 }
