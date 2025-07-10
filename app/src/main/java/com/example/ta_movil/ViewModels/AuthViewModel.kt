@@ -9,6 +9,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
 import com.google.firebase.auth.FirebaseAuthInvalidUserException
 import com.google.firebase.auth.FirebaseAuthUserCollisionException
+import com.google.firebase.auth.FirebaseAuthWeakPasswordException
 
 // El viewModel es el intermediario entre el UI y la database.
 // Por ahora, la database se enceuntra sin implementar (todo está en firebase)
@@ -53,15 +54,37 @@ class AuthViewModel : ViewModel(){
             }
     }
 
+    fun createAccount(auth: FirebaseAuth, onSuccess: () -> Unit) {
+        state = state.copy(isLoading = true)
+        
+        auth.createUserWithEmailAndPassword(state.email, state.password)
+            .addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    // Cuenta creada exitosamente
+                    onLoginSuccess()
+                    onSuccess() // Navegación
+                } else {
+                    // Error al crear la cuenta
+                    val exception = task.exception
+                    val errorMessage = when (exception) {
+                        is FirebaseAuthWeakPasswordException -> "La contraseña debe tener al menos 6 caracteres."
+                        is FirebaseAuthInvalidCredentialsException -> "El formato del correo electrónico no es válido."
+                        is FirebaseAuthUserCollisionException -> "Ya existe una cuenta con ese correo electrónico."
+                        else -> "Error al crear la cuenta. Por favor, intenta de nuevo."
+                    }
+                    onLoginError(errorMessage)
+                }
+            }
+    }
+
     fun onLoginSuccess() {
         state = state.copy(
             isLoading = false,
-            errorMessage = ""
+            errorMessage = "",
+            errorLabel = false
         )
     }
 
-
-    // A rehacer
     fun onLoginError(errorMessage: String) {
         state = state.copy(
             isLoading = false,
@@ -69,7 +92,6 @@ class AuthViewModel : ViewModel(){
             errorLabel = true
         )
     }
-
 
     fun buttonEnabled() {
         if(state.email.isNotEmpty() && state.password.isNotEmpty()){
@@ -79,7 +101,4 @@ class AuthViewModel : ViewModel(){
             state = state.copy(isLoginEnabled = false)
         }
     }
-
-
-
 }

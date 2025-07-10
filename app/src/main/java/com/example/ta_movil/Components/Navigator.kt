@@ -14,7 +14,7 @@ fun Navigator(auth: FirebaseAuth) {
     val navController = rememberNavController()
 
     // Se declaran los viewModels. Por ahora estos
-    val loginViewModel : AuthViewModel = viewModel()
+    val authViewModel : AuthViewModel = viewModel()
     val registerViewModel : RegisterViewModel = viewModel()
     val forgotViewModel : ForgotViewModel = viewModel()
     // Por ahora el auth acá, normalmente se debería de hacer en la capa de datos (repository)
@@ -25,11 +25,8 @@ fun Navigator(auth: FirebaseAuth) {
     ){
         // Aqui se colocaran flujos del aplicativo.
         // Chequen como esta hecho el flow del login.
-        authNavigation(navController, auth, loginViewModel, registerViewModel, forgotViewModel)
+        authNavigation(navController, auth, authViewModel, registerViewModel, forgotViewModel)
 
         // Pendiente flujo de dashboard
-
-
     }
-
 }

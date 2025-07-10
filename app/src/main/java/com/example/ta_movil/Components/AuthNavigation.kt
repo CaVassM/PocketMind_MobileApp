@@ -15,7 +15,8 @@ import com.example.ta_movil.Views.userLogin.forgotPassword.ForgotPassword
 import com.example.ta_movil.Views.userLogin.forgotPassword.PasswordSuccess
 import com.google.firebase.auth.FirebaseAuth
 
-fun NavGraphBuilder.authNavigation(
+// Implementación de las rutas de autenticación
+fun NavGraphBuilder.implementAuthRoutes(
     navController: NavHostController,
     auth: FirebaseAuth,
     loginViewModel: AuthViewModel,
@@ -65,12 +66,11 @@ fun NavGraphBuilder.authNavigation(
 
     composable("CreateSuccess"){
         CreateSuccess(
-            onNext = { navController.navigate("Dashboard")}
+            onNext = { navController.navigate("Login") }
         )
     }
 
-    /////////////// Flujo olvide contrasenia ///////////////////
-
+    /////////////// Flujo recuperar contraseña ///////////////////
     composable("ForgotPassword"){
         ForgotPassword(
             navController = navController,
@@ -80,12 +80,9 @@ fun NavGraphBuilder.authNavigation(
         )
     }
 
-
-    composable("PasswordSuccess") {
+    composable("PasswordSuccess"){
         PasswordSuccess(
             onSucess = { navController.navigate("Login") }
         )
     }
-
-
 }
