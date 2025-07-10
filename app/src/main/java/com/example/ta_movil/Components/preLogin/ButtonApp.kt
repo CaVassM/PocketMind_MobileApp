@@ -14,14 +14,15 @@ import com.example.ta_movil.ui.theme.Nunito
 
 
 @Composable
-fun ButtonApp(onNext: () -> Unit, string: String) {
+fun ButtonApp(onNext: () -> Unit, string: String, enabled: Boolean) {
     // El onClick mandará a la pestaña del inicio.
     Button(
         onClick = onNext,
         colors = ButtonDefaults.buttonColors(
             containerColor = Color(0xFF513C31),     // Fondo del botón (verde)
             contentColor = Color.White              // Color del texto
-        )
+        ),
+        enabled = enabled
     ){
         Text(
             text = string,

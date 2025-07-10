@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
@@ -26,10 +27,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.ta_movil.Components.preLogin.ButtonApp
 import com.example.ta_movil.Components.preLogin.LabelText
+import com.example.ta_movil.ViewModels.RegisterViewModel
 import com.example.ta_movil.ui.theme.AppTheme
+import com.google.firebase.auth.FirebaseAuth
 
 @Composable
-fun VerifyIdentity(onSuccess: () -> Unit) {
+fun VerifyIdentity(onSuccess: () -> Unit, auth: FirebaseAuth, registerViewModel: RegisterViewModel) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -50,40 +53,21 @@ fun VerifyIdentity(onSuccess: () -> Unit) {
         )
 
         Spacer(modifier = Modifier.height(40.dp))
-        LabelText("Hemos enviado un código de verificación a tu correo electrónico")
-        Spacer(modifier = Modifier.height(24.dp))
-        // POR MIENTRAS VARIABLE LOCAL
-        val codeState = remember { mutableStateOf("") }
-        TextField(
-            value = codeState.value,
-            onValueChange = { newValue ->
-                // Solo permite hasta 6 dígitos numéricos
-                if (newValue.length <= 6 && newValue.all { it.isDigit() }) {
-                    codeState.value = newValue
-                }
-            },
-            label = { Text("Código de 6 dígitos") },
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(AppTheme.cornerRadius),
-            colors = TextFieldDefaults.colors( // Usa .colors en lugar de .textFieldColors para M3
-                // --- Para quitar la línea cuando está enfocado ---
-                focusedIndicatorColor = Color.Transparent,
-                // --- Para quitar la línea cuando no está enfocado pero tiene contenido ---
-                unfocusedIndicatorColor = Color.Transparent,
-                // --- Para quitar la línea cuando está deshabilitado ---
-                disabledIndicatorColor = Color.Transparent,
-                // --- Para cambiar el color del fondo ---
-                focusedContainerColor = Color.White,
-                unfocusedContainerColor = Color.White
-            ),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-        )
+        LabelText("Hemos enviado un enlace de verificación a tu correo electrónico")
 
-        Spacer(modifier = Modifier.height(24.dp))
-
-        // Botón (estilo consistente)
         Spacer(modifier = Modifier.size(30.dp))
-        ButtonApp(onSuccess, " Verificar")
+        // Si es que el usuario cuenta con correo verificado, entonces funciona
+        ButtonApp(onNext = {
+            registerViewModel.onVerifyIdentity(onSuccess, auth)
+        }, " Verificar", true)
+        if (registerViewModel.state.errorMessageVerify.isNotEmpty()) {
+            Text(
+                text = registerViewModel.state.errorMessageVerify,
+                color = Color.Red,
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.padding(top = 8.dp)
+            )
+        }
     }
 
 }

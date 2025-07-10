@@ -14,6 +14,7 @@ import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
@@ -32,23 +33,27 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.ta_movil.Additionals.Dimens
+import com.example.ta_movil.Components.preLogin.ButtonApp
 
 import com.example.ta_movil.R
 // Reciclados
-import com.example.ta_movil.Views.userLogin.EmailField
-import com.example.ta_movil.Views.userLogin.PasswordField
-import com.example.ta_movil.Components.preLogin.ButtonApp
 
 import com.example.ta_movil.Components.preLogin.ClickableText
 import com.example.ta_movil.Components.preLogin.LabelText
+import com.example.ta_movil.ViewModels.RegisterViewModel
+import com.google.firebase.auth.FirebaseAuth
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CreateAccount(onNext: () -> Unit, onPrev: () -> Unit) {
+fun CreateAccount(
+    onNext: () -> Unit,
+    onPrev: () -> Unit,
+    auth: FirebaseAuth,
+    registerViewModel: RegisterViewModel
+) {
     // Procedemos.
     Scaffold  (
         modifier = Modifier
@@ -58,7 +63,7 @@ fun CreateAccount(onNext: () -> Unit, onPrev: () -> Unit) {
                 modifier = Modifier
                     .padding(vertical = 16.dp),
                 title = {Text(
-                    text = "Crear cuenta",
+                    text = "!Crea tu Cuenta!",
                     fontWeight = FontWeight.Black,
                     fontSize = 40.sp,
                     color = Color(0xFF513C31)
@@ -81,7 +86,7 @@ fun CreateAccount(onNext: () -> Unit, onPrev: () -> Unit) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ){
-            Create_content(onNext,onPrev)
+            Create_content(onNext,onPrev, auth, registerViewModel)
         }
 
     }
@@ -89,7 +94,12 @@ fun CreateAccount(onNext: () -> Unit, onPrev: () -> Unit) {
 }
 
 @Composable
-fun Create_content(onNext: () -> Unit, onPrev: () -> Unit) {
+fun Create_content(
+    onNext: () -> Unit,
+    onPrev: () -> Unit,
+    auth: FirebaseAuth,
+    registerViewModel: RegisterViewModel
+) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -100,40 +110,61 @@ fun Create_content(onNext: () -> Unit, onPrev: () -> Unit) {
         horizontalAlignment = Alignment.CenterHorizontally,
     ){
         LabelText("Ingrese su nombre de usuario")
-        NameField()
+        NameField(registerViewModel)
         Spacer(modifier = Modifier.size(16.dp))
+
         LabelText("Ingrese su correo electronico")
-        EmailField()
+        EmailFieldRegister(registerViewModel)
         Spacer(modifier = Modifier.size(16.dp))
+
         LabelText("Ingrese su telefono")
-        PhoneField()
+        PhoneField(registerViewModel)
         Spacer(modifier = Modifier.size(16.dp))
+
         LabelText("Ingrese su contraseña")
-        PasswordField()
+        PasswordFieldRegister(registerViewModel)
         Spacer(modifier = Modifier.size(16.dp))
+
         LabelText("Confirme su contraseña")
-        ConfirmPasswordField()
+        ConfirmPasswordField(registerViewModel)
         Spacer(modifier = Modifier.size(30.dp))
+
         ButtonApp(
-            onNext = onNext,
-            string = "Verifica correo"
+            onNext = {
+                registerViewModel.onVerify(onNext, auth)
+            },
+            "Crear cuenta",
+            enabled = registerViewModel.state.buttonEnabled
         )
         Spacer(modifier = Modifier.size(30.dp))
+        // Volver al login
         ClickableText(text = "Volver al inicio de sesión", onClick = onPrev)
+
+        // Manejo de errores
+        if (registerViewModel.state.errorMessage.isNotEmpty()) {
+            Text(
+                text = registerViewModel.state.errorMessage,
+                color = Color.Red,
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.padding(top = 8.dp)
+            )
+        }
     }
 
 }
 
 @Composable
-fun ConfirmPasswordField() {
+fun PasswordFieldRegister(registerViewModel: RegisterViewModel) {
     var passwordVisible by remember { mutableStateOf(false) } // Para poder alternar entre visible o no.
     // VisualTransformation se encarga de formatear todo el texto del field. Esto implica que para password se vea como puntitos o asi: ***
     TextField(
         shape = RoundedCornerShape(16.dp),
-        value = "",
-        onValueChange = {  },
-        label = { Text(text = "Confirmar contraseña") },
-        placeholder = { Text(text = "Confirmar contraseña") },
+        value = registerViewModel.state.password,
+        onValueChange = {
+            registerViewModel.onPasswordInput(it)
+        },
+        label = { Text(text = "Contraseña") },
+        placeholder = { Text(text = "Debe contener al menos 8 caracteres") },
         modifier = Modifier.fillMaxWidth(),
         singleLine = true,
         maxLines = 1,
@@ -150,17 +181,12 @@ fun ConfirmPasswordField() {
                     painter = painterResource(image),
                     contentDescription = description
                 )
-
             }
         },
         colors = TextFieldDefaults.colors(
-            // --- Para quitar la línea cuando está enfocado ---
             focusedIndicatorColor = Color.Transparent,
-            // --- Para quitar la línea cuando no está enfocado pero tiene contenido ---
             unfocusedIndicatorColor = Color.Transparent,
-            // --- Para quitar la línea cuando está deshabilitado ---
             disabledIndicatorColor = Color.Transparent,
-            // --- Para cambiar el color del fondo ---
             focusedContainerColor = Color.White,
             unfocusedContainerColor = Color.White
         )
@@ -168,26 +194,89 @@ fun ConfirmPasswordField() {
 }
 
 @Composable
-fun PhoneField() {
+fun EmailFieldRegister(registerViewModel: RegisterViewModel) {
+    // SingleLine para que no se expanda mas.
+    // maxLines para indicar que es solo 1
     TextField(
         shape = RoundedCornerShape(16.dp),
-        value = "",
-        onValueChange = {},
-        label = { Text(text = "Telefono") },
-        placeholder = { Text(text = "Telefono") },
+        value = registerViewModel.state.email,
+        onValueChange = {
+            registerViewModel.onEmailInput(it)
+        },
+        label = { Text(text = "Correo") },
+        placeholder = { Text(text = "Correo") },
+        modifier = Modifier
+            .fillMaxWidth(),
+        singleLine = true,
+        maxLines = 1,
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+        colors = TextFieldDefaults.colors(
+            focusedIndicatorColor = Color.Transparent,
+            unfocusedIndicatorColor = Color.Transparent,
+            disabledIndicatorColor = Color.Transparent,
+            focusedContainerColor = Color.White,
+            unfocusedContainerColor = Color.White
+        )
+    )
+}
+
+@Composable
+fun ConfirmPasswordField(registerViewModel: RegisterViewModel) {
+    var passwordVisible by remember { mutableStateOf(false) } // Para poder alternar entre visible o no.
+    // VisualTransformation se encarga de formatear todo el texto del field. Esto implica que para password se vea como puntitos o asi: ***
+    TextField(
+        shape = RoundedCornerShape(16.dp),
+        value = registerViewModel.state.confirmPassword,
+        onValueChange = {
+            registerViewModel.onConfirmPasswordInput(it)
+        },
+        label = { Text(text = "Confirmar contraseña") },
+        placeholder = { Text(text = "Contraseña ingresada debe de coincidir") },
+        modifier = Modifier.fillMaxWidth(),
+        singleLine = true,
+        maxLines = 1,
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+        visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(), // Se aplica la transformacion solo si el usuario decide que sea visible.
+        trailingIcon = {
+            val image = if (passwordVisible) R.drawable.visibility
+            else R.drawable.no_visibility
+            val description = if (passwordVisible) "Ocultar contraseña" else "Mostrar contraseña"
+            IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                Icon(
+                    painter = painterResource(image),
+                    contentDescription = description
+                )
+
+            }
+        },
+        colors = TextFieldDefaults.colors(
+            focusedIndicatorColor = Color.Transparent,
+            unfocusedIndicatorColor = Color.Transparent,
+            disabledIndicatorColor = Color.Transparent,
+            focusedContainerColor = Color.White,
+            unfocusedContainerColor = Color.White
+        )
+    )
+}
+
+@Composable
+fun PhoneField(registerViewModel: RegisterViewModel) {
+    TextField(
+        shape = RoundedCornerShape(16.dp),
+        value = registerViewModel.state.phoneNumber,
+        onValueChange = {
+            registerViewModel.onPhoneNumberInput(it)
+        },
+        placeholder = { Text(text = "Número telefónico") },
         modifier = Modifier
             .fillMaxWidth(),
         singleLine = true,
         maxLines = 1,
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
         colors = TextFieldDefaults.colors(
-            // --- Para quitar la línea cuando está enfocado ---
             focusedIndicatorColor = Color.Transparent,
-            // --- Para quitar la línea cuando no está enfocado pero tiene contenido ---
             unfocusedIndicatorColor = Color.Transparent,
-            // --- Para quitar la línea cuando está deshabilitado ---
             disabledIndicatorColor = Color.Transparent,
-            // --- Para cambiar el color del fondo ---
             focusedContainerColor = Color.White,
             unfocusedContainerColor = Color.White
         )
@@ -195,12 +284,13 @@ fun PhoneField() {
 }
 
 @Composable
-fun NameField() {
+fun NameField(registerViewModel: RegisterViewModel) {
     TextField(
         shape = RoundedCornerShape(16.dp),
-        value = "",
-        onValueChange = {},
-        label = { Text(text = "Nombre") },
+        value = registerViewModel.state.name,
+        onValueChange = {
+            registerViewModel.onNameInput(it)
+        },
         placeholder = { Text(text = "Nombre") },
         modifier = Modifier
             .fillMaxWidth(),
@@ -208,13 +298,9 @@ fun NameField() {
         maxLines = 1,
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
         colors = TextFieldDefaults.colors(
-            // --- Para quitar la línea cuando está enfocado ---
             focusedIndicatorColor = Color.Transparent,
-            // --- Para quitar la línea cuando no está enfocado pero tiene contenido ---
             unfocusedIndicatorColor = Color.Transparent,
-            // --- Para quitar la línea cuando está deshabilitado ---
             disabledIndicatorColor = Color.Transparent,
-            // --- Para cambiar el color del fondo ---
             focusedContainerColor = Color.White,
             unfocusedContainerColor = Color.White
         )

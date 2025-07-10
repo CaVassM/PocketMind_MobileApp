@@ -25,14 +25,18 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.ta_movil.Components.preLogin.ButtonApp
+import com.example.ta_movil.ViewModels.ForgotViewModel
 import com.example.ta_movil.ui.theme.Nunito
 import com.example.ta_movil.ui.theme.AppTheme
+import com.google.firebase.auth.FirebaseAuth
 
 
 @Composable
 fun ForgotPassword(
     navController: NavController,
-    onSuccess: () -> Unit
+    onSuccess: () -> Unit,
+    forgotViewModel: ForgotViewModel,
+    auth: FirebaseAuth
 ) {
     Column(
         modifier = Modifier
@@ -65,19 +69,17 @@ fun ForgotPassword(
         Spacer(modifier = Modifier.height(24.dp))
         // Campo de email (estilo consistente con Login)
         TextField(
-            value = "",
-            onValueChange = {},
+            value = forgotViewModel.state.correo,
+            onValueChange = {
+                forgotViewModel.onCorreoInput(it)
+            },
             label = { Text("Correo electrónico") },
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(AppTheme.cornerRadius),
-            colors = TextFieldDefaults.colors( // Usa .colors en lugar de .textFieldColors para M3
-                // --- Para quitar la línea cuando está enfocado ---
+            colors = TextFieldDefaults.colors(
                 focusedIndicatorColor = Color.Transparent,
-                // --- Para quitar la línea cuando no está enfocado pero tiene contenido ---
                 unfocusedIndicatorColor = Color.Transparent,
-                // --- Para quitar la línea cuando está deshabilitado ---
                 disabledIndicatorColor = Color.Transparent,
-                // --- Para cambiar el color del fondo ---
                 focusedContainerColor = Color.White,
                 unfocusedContainerColor = Color.White
             ),
@@ -88,7 +90,9 @@ fun ForgotPassword(
 
         // Botón (estilo consistente)
         Spacer(modifier = Modifier.size(30.dp))
-        ButtonApp(onSuccess, "Enviar código \nde verificación")
+        ButtonApp({
+            forgotViewModel.onForgotPassword(auth, onSuccess)
+        }, "Enviar código \nde verificación", forgotViewModel.state.buttonEnabled)
 
         Spacer(modifier = Modifier.size(30.dp))
         Text(
@@ -103,6 +107,13 @@ fun ForgotPassword(
                 .clickable { navController.popBackStack() }
                 .padding(16.dp)
         )
+        if(forgotViewModel.state.errorLabel){
+            Text(
+                text = forgotViewModel.state.errorMessage,
+                color = Color.Red,
+                modifier = Modifier.padding(vertical = 16.dp)
+            )
+        }
 
     }
 }
