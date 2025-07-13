@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -18,14 +19,20 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusManager
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -71,6 +78,13 @@ fun LoginContent(
     auth: FirebaseAuth,
     loginViewModel: AuthViewModel
 ) {
+
+    // Controla los focos sobre cada input luego de presionar "Enter".
+    val emailFocus = remember { FocusRequester() }
+    val passwordFocus = remember { FocusRequester() }
+
+    val focusManager = LocalFocusManager.current
+
     // Capturamos el state.
     Column(
         modifier = Modifier
@@ -86,10 +100,10 @@ fun LoginContent(
         Text(text = "Ó")
         Spacer(modifier = Modifier.size(16.dp))
 
-        EmailField(loginViewModel)
+        EmailField(loginViewModel, focusRequester = emailFocus, nextFocus = passwordFocus)
         Spacer(modifier = Modifier.size(16.dp))
 
-        PasswordField(loginViewModel)
+        PasswordField(loginViewModel, focusRequester = passwordFocus, focusManager = focusManager)
         Spacer(modifier = Modifier.size(48.dp))
 
         ClickableText(text = "¿No tiene cuenta?", onClick = onCreateAccount)
@@ -123,9 +137,12 @@ fun LoginContent(
     }
 }
 
-
 @Composable
-fun EmailField(loginViewModel: AuthViewModel) {
+fun EmailField(loginViewModel: AuthViewModel, focusRequester: FocusRequester, nextFocus: FocusRequester) {
+    LaunchedEffect(Unit) {
+        focusRequester.requestFocus()
+    }
+
     // SingleLine para que no se expanda mas.
     // maxLines para indicar que es solo 1
     TextField(
@@ -134,14 +151,18 @@ fun EmailField(loginViewModel: AuthViewModel) {
         onValueChange = {
             loginViewModel.onEmailInput(it)
         },
-        label = { Text(text = "Correo") },
+        // label = { Text(text = "Correo") },
         placeholder = { Text(text = "Correo") },
         modifier = Modifier
-            .fillMaxWidth(),
+            .fillMaxWidth()
+            .focusRequester(focusRequester),
         singleLine = true,
         maxLines = 1,
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Next),
+        keyboardActions = KeyboardActions(onNext = { nextFocus.requestFocus() }),
         colors = TextFieldDefaults.colors(
+            focusedTextColor = Color.Black,
+            unfocusedTextColor = Color.Black,
             focusedIndicatorColor = Color.Transparent,
             unfocusedIndicatorColor = Color.Transparent,
             disabledIndicatorColor = Color.Transparent,
@@ -152,7 +173,7 @@ fun EmailField(loginViewModel: AuthViewModel) {
 }
 
 @Composable
-fun PasswordField(loginViewModel: AuthViewModel) {
+fun PasswordField(loginViewModel: AuthViewModel, focusRequester: FocusRequester, focusManager: FocusManager) {
     // SingleLine para que no se expanda mas.
     // maxLines para indicar que es solo 1
     var passwordVisible by remember { mutableStateOf(false) } // Para poder alternar entre visible o no.
@@ -163,12 +184,15 @@ fun PasswordField(loginViewModel: AuthViewModel) {
         onValueChange = {
             loginViewModel.onPasswordInput(it)
         },
-        label = { Text(text = "Contraseña") },
+        // label = { Text(text = "Contraseña") },
         placeholder = { Text(text = "Contraseña") },
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .focusRequester(focusRequester),
         singleLine = true,
         maxLines = 1,
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
+        keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
         visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(), // Se aplica la transformacion solo si el usuario decide que sea visible.
         trailingIcon = {
             val image = if (passwordVisible) R.drawable.visibility
@@ -185,6 +209,8 @@ fun PasswordField(loginViewModel: AuthViewModel) {
             }
         },
         colors = TextFieldDefaults.colors(
+            focusedTextColor = Color.Black,
+            unfocusedTextColor = Color.Black,
             focusedIndicatorColor = Color.Transparent,
             unfocusedIndicatorColor = Color.Transparent,
             disabledIndicatorColor = Color.Transparent,
