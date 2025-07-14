@@ -5,6 +5,7 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.runtime.Composable
 import com.example.ta_movil.Components.MainNavigation
 import com.example.ta_movil.ui.theme.TA_MOVILTheme
 import com.google.firebase.FirebaseApp
@@ -36,7 +37,9 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             TA_MOVILTheme {
-                MainNavigation(auth)
+                // Determinar el destino inicial basado en el estado de autenticación
+                val startDestination = if (auth.currentUser != null) "dashboard" else "home"
+                MainNavigation(auth, startDestination)
             }
         }
     }

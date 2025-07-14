@@ -5,6 +5,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import com.example.ta_movil.Model.pagesInit.registerState
+import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
 import com.google.firebase.auth.FirebaseAuthUserCollisionException
@@ -109,10 +110,26 @@ class RegisterViewModel : ViewModel(){
         }
     }
 
+    fun onUpdatePassword(currentPassword: String, newPassword: String, onResult: (Boolean, String?) -> Unit) {
+        val user = FirebaseAuth.getInstance().currentUser
+        val email = user?.email ?: return onResult(false, "Email no disponible")
 
-
-
-
-
+        val credential = EmailAuthProvider.getCredential(email, currentPassword)
+        user.reauthenticate(credential)
+            .addOnCompleteListener { authTask ->
+                if (authTask.isSuccessful) {
+                    user.updatePassword(newPassword)
+                        .addOnCompleteListener { updateTask ->
+                            if (updateTask.isSuccessful) {
+                                onResult(true, null)
+                            } else {
+                                onResult(false, updateTask.exception?.message)
+                            }
+                        }
+                } else {
+                    onResult(false, authTask.exception?.message)
+                }
+            }
+    }
 
 }

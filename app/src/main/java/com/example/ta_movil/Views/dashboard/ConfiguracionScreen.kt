@@ -28,7 +28,7 @@ fun ConfiguracionScreen(
         modifier = Modifier.fillMaxSize(),
         topBar = {
             TopAppBar(
-                title = { Text("Configuración") },
+                title = { Text("Mi Perfil") },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(
@@ -94,14 +94,22 @@ fun ConfiguracionScreen(
                     OutlinedButton(
                         onClick = { /* Implementar cambio de contraseña */ }
                     ) {
-                        Text("Cambiar contraseña")
+                        Text(
+                            text = "Cambiar contraseña",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = AppTheme.primaryText
+                        )
                     }
                     
                     // Cambiar correo
                     OutlinedButton(
                         onClick = { /* Implementar cambio de correo */ }
                     ) {
-                        Text("Cambiar correo electrónico")
+                        Text(
+                            text = "Cambiar correo electrónico",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = AppTheme.primaryText
+                        )
                     }
                 }
             }
@@ -124,7 +132,7 @@ fun ConfiguracionScreen(
                         color = AppTheme.primaryText
                     )
                     Spacer(modifier = Modifier.height(8.dp))
-                    
+
                     // Eliminar cuenta
                     Button(
                         onClick = { showDeleteAccountDialog = true },
@@ -135,6 +143,21 @@ fun ConfiguracionScreen(
                         Text("Eliminar cuenta")
                     }
                 }
+            }
+
+            Spacer(modifier = Modifier.weight(1f))
+
+            // Cerrar Sesión
+            Button(
+                onClick = { showLogoutDialog = true },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(20.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary
+                )
+            ) {
+                Text("Cerrar sesión")
             }
         }
     }

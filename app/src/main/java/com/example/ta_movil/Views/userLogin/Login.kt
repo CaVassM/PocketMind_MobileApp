@@ -130,10 +130,6 @@ fun LoginContent(
                 modifier = Modifier.padding(top = 8.dp)
             )
         }
-
-
-
-
     }
 }
 
