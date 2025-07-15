@@ -230,6 +230,46 @@ class DashboardViewModel : ViewModel() {
             }
     }
 
+    // Método para actualizar una transacción existente
+    fun updateTransaction(transaction: Transaction) {
+        val currentUser = auth.currentUser
+        if (currentUser == null) {
+            errorMessage = "No hay usuario autenticado"
+            return
+        }
+
+        isLoading = true
+        errorMessage = null
+
+        val transactionMap = hashMapOf(
+            "id" to transaction.id,
+            "type" to transaction.type.name,
+            "amount" to transaction.amount,
+            "description" to transaction.description,
+            "date" to transaction.date,
+            "paymentMethod" to transaction.paymentMethod,
+            "timestamp" to System.currentTimeMillis()
+        )
+
+        db.collection("users")
+            .document(currentUser.uid)
+            .collection("transactions")
+            .document(transaction.id)
+            .set(transactionMap)
+            .addOnSuccessListener {
+                // Actualizar la lista local
+                transactions = transactions.map { 
+                    if (it.id == transaction.id) transaction else it 
+                }
+                isLoading = false
+                loadTransactions() // Recargar para mantener sincronización
+            }
+            .addOnFailureListener { e ->
+                errorMessage = "Error al actualizar la transacción: ${e.message}"
+                isLoading = false
+            }
+    }
+
     fun navigateTo(screen: Screen) {
         currentScreen = screen
     }
@@ -335,7 +375,7 @@ class DashboardViewModel : ViewModel() {
 
 
     fun updateGoal(goal: SavingGoal) {
-        val goalRef = db.collection("users").document(currentUser.uid)
+        val goalRef = db.collection("users").document(auth.currentUser?.uid ?: "")
             .collection("savingGoals").document(goal.id)
         
         val goalData = mapOf(
@@ -345,31 +385,8 @@ class DashboardViewModel : ViewModel() {
         )
         
         goalRef.set(goalData)
-
-
             .addOnFailureListener { e ->
                 errorMessage = "Error al actualizar la meta: ${e.message}"
             }
     }
-
-        fun deleteSavingGoal(goalId: String) {
-            db.collection("users")
-                .document(auth.currentUser?.uid ?: "")
-                .collection("savingGoals")
-                .document(goalId)
-                .delete()
-                .addOnSuccessListener {
-                    loadSavingGoals()
-                }
-                .addOnFailureListener { exception ->
-                    errorMessage = "Error al eliminar la meta: ${exception.message}"
-                }
-        }
-
-        // AGREGADO: Método para limpiar errores
-        fun clearError() {
-            errorMessage = null
-        }
-
-
 }
