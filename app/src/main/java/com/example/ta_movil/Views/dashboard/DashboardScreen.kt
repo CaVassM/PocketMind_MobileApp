@@ -6,7 +6,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Edit
@@ -40,8 +39,8 @@ fun DashboardScreen(
                     when (screen) {
                         Screen.Dashboard -> navController.navigate("dashboard")
                         Screen.IngresosEgresos -> navController.navigate("ingresos_egresos")
+                        Screen.Historial -> navController.navigate("historial")
                         Screen.Configuracion -> navController.navigate("configuracion")
-                        Screen.Goals -> navController.navigate("goals")
                     }
                 }
             )
@@ -141,7 +140,7 @@ val Screen.icon: @Composable () -> Unit
         when (this) {
             Screen.Dashboard -> Icon(Icons.Filled.Home, contentDescription = "Dashboard")
             Screen.IngresosEgresos -> Icon(Icons.Filled.Add, contentDescription = "Ingresos y Egresos")
+            Screen.Historial -> Icon(Icons.Filled.DateRange, contentDescription = "Historial")
             Screen.Configuracion -> Icon(Icons.Filled.Settings, contentDescription = "Configuración")
-            Screen.Goals -> Icon(Icons.Filled.Build, contentDescription = "Metas Personales")
         }
     }

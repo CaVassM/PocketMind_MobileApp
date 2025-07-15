@@ -19,19 +19,19 @@ import com.example.ta_movil.Views.userLogin.createAccount.VerifyIdentity
 import com.example.ta_movil.Views.userLogin.forgotPassword.ForgotPassword
 import com.example.ta_movil.Views.userLogin.forgotPassword.PasswordSuccess
 import com.example.ta_movil.Views.dashboard.DashboardScreen
-import com.example.ta_movil.Views.dashboard.GoalsScreen
+
 import com.example.ta_movil.Views.dashboard.ConfiguracionScreen
 import com.google.firebase.auth.FirebaseAuth
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.ta_movil.ViewModels.dashboard.HistorialModalViewModel
 import com.example.ta_movil.ViewModels.dashboard.HistorialViewModel
 import com.example.ta_movil.Views.HistorialScreen
-import com.example.ta_movil.ViewModels.dashboard.GoalsModalViewModel
+
 
 @Composable
 fun MainNavigation(
     auth: FirebaseAuth,
-    startDestination: String = "login"
+    startDestination: String = "home"
 ) {
     val navController = rememberNavController()
     
@@ -56,18 +56,6 @@ fun MainNavigation(
             DashboardScreen(navController, dashboardViewModel)
         }
 
-        composable("goals") {
-            // 3) El modal (puede seguir siendo un viewModel normal)
-            val goalsModalViewModel: GoalsModalViewModel = viewModel()
-
-            // 4) Lanza tu pantalla
-            GoalsScreen(
-                navController,
-                dashboardViewModel,
-                dashboardViewModel,
-                goalsModalViewModel
-            )
-        }
 
         composable("ingresos_egresos") {
 

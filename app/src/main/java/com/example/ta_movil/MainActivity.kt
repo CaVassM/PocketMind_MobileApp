@@ -37,8 +37,9 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             TA_MOVILTheme {
-                // Siempre iniciar en login
-                MainNavigation(auth, "login")
+                // Determinar el destino inicial basado en el estado de autenticación
+                val startDestination = if (auth.currentUser != null) "dashboard" else "home"
+                MainNavigation(auth, startDestination)
             }
         }
     }
@@ -47,18 +48,15 @@ class MainActivity : ComponentActivity() {
         super.onStart()
         
         if (!isFirebaseInitialized) {
+            Toast.makeText(this, "Firebase no inicializado correctamente", Toast.LENGTH_LONG).show()
             return
         }
-
-        // Manejar el estado de autenticación
-        auth.addAuthStateListener { firebaseAuth ->
-            val user = firebaseAuth.currentUser
-            if (user != null) {
-                // Usuario autenticado, navegar a dashboard
-                // Esta navegación se maneja automáticamente en LoginScreen
-            } else {
-                // Usuario no autenticado, ya estamos en login
-            }
+        
+        val currentUser = auth.currentUser
+        if (currentUser != null) {
+            // El usuario está logueado
+        } else {
+            // El usuario no está logueado
         }
     }
 }
