@@ -240,22 +240,54 @@ class DashboardViewModel : ViewModel() {
             }
     }
 
-    fun deleteSavingGoal(goalId: String) {
+    fun updateTransaction(transaction: Transaction) {
+        val currentUser = auth.currentUser
+        if (currentUser == null) {
+            errorMessage = "No hay usuario autenticado"
+            return
+        }
+
+        val transactionMap = hashMapOf(
+            "id" to transaction.id,
+            "type" to transaction.type.name,
+            "amount" to transaction.amount,
+            "description" to transaction.description,
+            "date" to transaction.date,
+            "paymentMethod" to transaction.paymentMethod,
+            "timestamp" to System.currentTimeMillis()
+        )
+
         db.collection("users")
-            .document(auth.currentUser?.uid ?: "")
-            .collection("savingGoals")
-            .document(goalId)
-            .delete()
+            .document(currentUser.uid)
+            .collection("transactions")
+            .document(transaction.id)
+            .set(transactionMap)
             .addOnSuccessListener {
-                loadSavingGoals()
+                loadTransactions()
             }
             .addOnFailureListener { exception ->
-                errorMessage = "Error al eliminar la meta: ${exception.message}"
+                errorMessage = "Error al actualizar la transacción: ${exception.message}"
             }
     }
 
-    // AGREGADO: Método para limpiar errores
-    fun clearError() {
-        errorMessage = null
-    }
+
+        fun deleteSavingGoal(goalId: String) {
+            db.collection("users")
+                .document(auth.currentUser?.uid ?: "")
+                .collection("savingGoals")
+                .document(goalId)
+                .delete()
+                .addOnSuccessListener {
+                    loadSavingGoals()
+                }
+                .addOnFailureListener { exception ->
+                    errorMessage = "Error al eliminar la meta: ${exception.message}"
+                }
+        }
+
+        // AGREGADO: Método para limpiar errores
+        fun clearError() {
+            errorMessage = null
+        }
+
 }

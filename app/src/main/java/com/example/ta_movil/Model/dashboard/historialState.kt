@@ -1,9 +1,7 @@
 package com.example.ta_movil.Models
 
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import com.example.ta_movil.ViewModels.dashboard.TransactionType
-import java.util.*
 
 /**
  * Modelo para agrupar transacciones por fecha
@@ -25,6 +23,6 @@ data class HistorialTransaction(
     val category: String,
     val amount: Double,
     val type: TransactionType,
-    val icon: ImageVector,
+    val icon: Int,
     val iconColor: Color
 )
