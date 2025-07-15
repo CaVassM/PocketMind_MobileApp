@@ -52,21 +52,12 @@ fun DashboardScreen(
                     .fillMaxSize()
                     .padding(paddingValues)
             ) {
-                // Lista de metas de ahorro
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f)
-                ) {
-                    items(viewModel.savingGoals) { goal ->
-                        SavingGoalCard(
-                            goal = goal,
-                            onEdit = { /* Implementar edición */ },
-                            onDelete = { /* Implementar eliminación */ }
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                    }
-                }
+                // Contenido principal del dashboard
+                Text(
+                    text = "Bienvenido a PocketMind",
+                    style = MaterialTheme.typography.headlineMedium,
+                    modifier = Modifier.padding(16.dp)
+                )
             }
         }
     )
