@@ -1,8 +1,5 @@
 package com.example.ta_movil.ViewModels.dashboard
 
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -11,10 +8,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.ta_movil.Additionals.ColorsTheme
 import com.example.ta_movil.Models.HistorialTransaction
 import com.example.ta_movil.Models.TransactionGroup
-import com.example.ta_movil.ViewModels.dashboard.DashboardViewModel
-import com.example.ta_movil.ViewModels.dashboard.Screen
-import com.example.ta_movil.ViewModels.dashboard.Transaction
-import com.example.ta_movil.ViewModels.dashboard.TransactionType
+import com.example.ta_movil.R
 import kotlinx.coroutines.launch
 import java.util.*
 
@@ -26,8 +20,28 @@ class HistorialViewModel(
     private val dashboardViewModel: DashboardViewModel
 ) : ViewModel() {
 
-    // Estado para controlar la visibilidad del modal
+    // Estado para controlar la visibilidad del modal de nueva transacción
     var showTransactionModal by mutableStateOf(false)
+        private set
+
+    // Estado para controlar la visibilidad del modal de edición
+    var showEditTransactionModal by mutableStateOf(false)
+        private set
+
+    // Transacción seleccionada para edición
+    var selectedTransaction by mutableStateOf<HistorialTransaction?>(null)
+        private set
+
+    // Estados para el modal de edición
+    var editAmount by mutableStateOf("")
+        private set
+    var editDescription by mutableStateOf("")
+        private set
+    var editDate by mutableStateOf("")
+        private set
+    var editPaymentMethod by mutableStateOf("")
+        private set
+    var editTransactionType by mutableStateOf(TransactionType.EXPENSE)
         private set
 
     // Grupos de transacciones para mostrar en la UI
@@ -57,6 +71,7 @@ class HistorialViewModel(
     fun loadTransactions() {
         viewModelScope.launch {
             dashboardViewModel.loadTransactions()
+            updateTransactionGroups()
         }
     }
 
@@ -75,12 +90,130 @@ class HistorialViewModel(
     }
 
     /**
+     * Muestra el modal de edición con los datos de la transacción seleccionada
+     */
+    fun showEditTransactionModal(transaction: HistorialTransaction) {
+        selectedTransaction = transaction
+
+        // Cargar los datos actuales en los campos de edición
+        editAmount = kotlin.math.abs(transaction.amount).toString()
+        editDescription = transaction.description
+        editPaymentMethod = transaction.category
+
+        // Buscar la transacción original para obtener la fecha y tipo
+        val originalTransaction = dashboardViewModel.transactions.find { it.id == transaction.id }
+        editDate = originalTransaction?.date ?: ""
+        editTransactionType = originalTransaction?.type ?: TransactionType.EXPENSE
+
+        showEditTransactionModal = true
+    }
+
+    /**
+     * Oculta el modal de edición
+     */
+    fun hideEditTransactionModal() {
+        showEditTransactionModal = false
+        selectedTransaction = null
+        clearEditFields()
+    }
+
+    /**
+     * Actualiza el campo de cantidad en el modal de edición
+     */
+    fun updateEditAmount(amount: String) {
+        editAmount = amount
+    }
+
+    /**
+     * Actualiza el campo de descripción en el modal de edición
+     */
+    fun updateEditDescription(description: String) {
+        editDescription = description
+    }
+
+    /**
+     * Actualiza el campo de fecha en el modal de edición
+     */
+    fun updateEditDate(date: String) {
+        editDate = date
+    }
+
+    /**
+     * Duplica la transacción seleccionada
+     */
+    fun duplicateTransaction(transaction: HistorialTransaction) {
+        viewModelScope.launch {
+            val originalTransaction = dashboardViewModel.transactions.find { it.id == transaction.id }
+            originalTransaction?.let { original ->
+                // Generar un nuevo ID único para la transacción duplicada
+                val newId = UUID.randomUUID().toString()
+
+                val duplicatedTransaction = Transaction(
+                    id = newId,
+                    description = original.description,
+                    amount = original.amount,
+                    type = original.type,
+                    paymentMethod = original.paymentMethod,
+                    date = original.date
+                )
+
+                dashboardViewModel.addTransaction(
+                    transaction = duplicatedTransaction,
+                    onSuccess = {
+                        updateTransactionGroups()
+                    },
+                    onFailure = { error ->
+                        // El error ya se maneja en el DashboardViewModel
+                    }
+                )
+            }
+        }
+    }
+
+    /**
+     * Guarda los cambios de la transacción editada
+     */
+    fun saveEditedTransaction() {
+        selectedTransaction?.let { transaction ->
+            viewModelScope.launch {
+                val amount = editAmount.toDoubleOrNull() ?: 0.0
+
+                // Crear la transacción actualizada
+                val updatedTransaction = Transaction(
+                    id = transaction.id,
+                    description = editDescription,
+                    amount = amount,
+                    type = editTransactionType,
+                    paymentMethod = editPaymentMethod,
+                    date = editDate
+                )
+
+                // Llamar al método de actualización del DashboardViewModel
+                dashboardViewModel.updateTransaction(updatedTransaction)
+
+                // Actualizar grupos después de la edición
+                updateTransactionGroups()
+
+                // Cerrar el modal
+                hideEditTransactionModal()
+            }
+        }
+    }
+
+    /**
      * Elimina una transacción y actualiza la lista
      */
     fun deleteTransaction(transactionId: String) {
         viewModelScope.launch {
-            dashboardViewModel.deleteTransaction(transactionId)
-            updateTransactionGroups()
+            dashboardViewModel.deleteTransaction(
+                transactionId = transactionId,
+                onSuccess = {
+                    updateTransactionGroups()
+                },
+                onFailure = { error ->
+                    // El error ya se maneja en el DashboardViewModel
+                }
+            )
         }
     }
 
@@ -96,6 +229,24 @@ class HistorialViewModel(
      */
     fun retryLoadTransactions() {
         loadTransactions()
+    }
+
+    /**
+     * Limpia los mensajes de error
+     */
+    fun clearError() {
+        dashboardViewModel.clearError()
+    }
+
+    /**
+     * Limpia los campos de edición
+     */
+    private fun clearEditFields() {
+        editAmount = ""
+        editDescription = ""
+        editDate = ""
+        editPaymentMethod = ""
+        editTransactionType = TransactionType.EXPENSE
     }
 
     // FUNCIONES PRIVADAS PARA MAPEO Y UTILIDADES
@@ -121,6 +272,16 @@ class HistorialViewModel(
                     transactions = transactionList.map { mapToHistorialTransaction(it) }
                 )
             }
+            .sortedByDescending { group ->
+                // Ordenar grupos por fecha más reciente primero
+                try {
+                    parseDateForSorting(group.transactions.firstOrNull()?.let {
+                        dashboardViewModel.transactions.find { tx -> tx.id == it.id }?.date
+                    } ?: "")
+                } catch (e: Exception) {
+                    0L
+                }
+            }
     }
 
     /**
@@ -136,15 +297,52 @@ class HistorialViewModel(
                 TransactionType.EXPENSE -> -transaction.amount
             },
             type = transaction.type,
-            icon = when (transaction.type) {
-                TransactionType.INCOME -> Icons.Default.Add
-                TransactionType.EXPENSE -> Icons.Default.ShoppingCart
+            icon = when (transaction.paymentMethod) {
+                "Efectivo" -> R.drawable.cash
+                "Tarjeta" -> R.drawable.card
+                "Transferencia" -> R.drawable.transfer
+                else -> R.drawable.other
             },
             iconColor = when (transaction.type) {
                 TransactionType.INCOME -> ColorsTheme.incomeColor
                 TransactionType.EXPENSE -> ColorsTheme.expenseColor
             }
         )
+    }
+
+    /**
+     * Convierte una fecha string a timestamp para ordenamiento
+     */
+    private fun parseDateForSorting(dateString: String): Long {
+        return try {
+            val calendar = Calendar.getInstance()
+            when {
+                dateString.contains("/") -> {
+                    val parts = dateString.split("/")
+                    if (parts.size >= 3) {
+                        val day = parts[0].toInt()
+                        val month = parts[1].toInt() - 1
+                        val year = parts[2].toInt()
+                        calendar.set(year, month, day)
+                    }
+                }
+                dateString.contains("-") -> {
+                    val parts = dateString.split("-")
+                    if (parts.size >= 3) {
+                        val year = parts[0].toInt()
+                        val month = parts[1].toInt() - 1
+                        val day = parts[2].toInt()
+                        calendar.set(year, month, day)
+                    }
+                }
+                else -> {
+                    calendar.timeInMillis = dateString.toLongOrNull() ?: System.currentTimeMillis()
+                }
+            }
+            calendar.timeInMillis
+        } catch (e: Exception) {
+            System.currentTimeMillis()
+        }
     }
 
     /**
@@ -155,11 +353,11 @@ class HistorialViewModel(
             when {
                 dateString.contains("/") -> {
                     val parts = dateString.split("/")
-                    if (parts.size >= 1) parts[0] else "01"
+                    if (parts.size >= 1) String.format("%02d", parts[0].toInt()) else "01"
                 }
                 dateString.contains("-") -> {
                     val parts = dateString.split("-")
-                    if (parts.size >= 3) parts[2] else "01"
+                    if (parts.size >= 3) String.format("%02d", parts[2].toInt()) else "01"
                 }
                 else -> {
                     val calendar = Calendar.getInstance()

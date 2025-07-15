@@ -13,10 +13,14 @@ import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import com.example.ta_movil.Additionals.ColorsTheme
+import com.example.ta_movil.R
 import com.example.ta_movil.ViewModels.dashboard.Screen
+
+
 
 @Composable
 fun BottomNavigationBar(
@@ -83,13 +87,13 @@ fun BottomNavigationBar(
         NavigationBarItem(
             icon = {
                 Icon(
-                    imageVector = Icons.Filled.Warning,
-                    contentDescription = "Estadísticas"
+                    painter = painterResource(id = R.drawable.money_bottom),
+                    contentDescription = "Historial"
                 )
             },
             label = {
                 Text(
-                    text = "Estadísticas",
+                    text = "Historial",
                     fontSize = 12.sp,
                     fontWeight = if (currentScreen == Screen.IngresosEgresos) FontWeight.Bold else FontWeight.Normal
                 )

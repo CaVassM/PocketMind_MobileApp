@@ -1,6 +1,7 @@
 package com.example.ta_movil.Views
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -10,17 +11,18 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.ta_movil.Additionals.ColorsTheme
 import com.example.ta_movil.Components.BottomNavigationBar
 import com.example.ta_movil.Models.HistorialTransaction
@@ -30,6 +32,7 @@ import com.example.ta_movil.ViewModels.dashboard.HistorialModalViewModel
 import com.example.ta_movil.ViewModels.dashboard.HistorialViewModel
 import com.example.ta_movil.ViewModels.dashboard.Screen
 import com.example.ta_movil.Views.dashboard.TransactionModal
+import com.example.ta_movil.Views.dashboard.EditTransactionModal
 
 /**
  * Pantalla del historial que muestra todas las transacciones agrupadas por fecha
@@ -39,18 +42,16 @@ import com.example.ta_movil.Views.dashboard.TransactionModal
 @Composable
 fun HistorialScreen(
     navController: NavController,
-    dashboardViewModel: DashboardViewModel = viewModel(),
+    dashboardViewModel: DashboardViewModel,
     historialViewModel: HistorialViewModel,
     historialModalViewModel: HistorialModalViewModel
 ) {
-    val historialViewModel = remember { HistorialViewModel(dashboardViewModel) }
-
-    // 1) Cargo transacciones al inicio
+    // Cargar transacciones al inicio
     LaunchedEffect(Unit) {
         historialViewModel.loadTransactions()
     }
 
-    // 2) Cada vez que cambien las transactions en dashboard, actualizo los grupos
+    // Actualizar grupos cuando cambien las transacciones
     LaunchedEffect(dashboardViewModel.transactions) {
         historialViewModel.updateTransactionGroups()
     }
@@ -133,6 +134,22 @@ fun HistorialScreen(
         viewModel = historialModalViewModel,
         dashboardViewModel = dashboardViewModel
     )
+
+    // Modal para editar transacción
+    EditTransactionModal(
+        isVisible = historialViewModel.showEditTransactionModal,
+        onDismiss = { historialViewModel.hideEditTransactionModal() },
+        transaction = historialViewModel.selectedTransaction,
+        amount = historialViewModel.editAmount,
+        description = historialViewModel.editDescription,
+        date = historialViewModel.editDate,
+        paymentMethod = historialViewModel.editPaymentMethod,
+        transactionType = historialViewModel.editTransactionType,
+        onAmountChange = { historialViewModel.updateEditAmount(it) },
+        onDescriptionChange = { historialViewModel.updateEditDescription(it) },
+        onDateChange = { historialViewModel.updateEditDate(it) },
+        onSave = { historialViewModel.saveEditedTransaction() }
+    )
 }
 
 /**
@@ -151,7 +168,8 @@ private fun HistorialContent(
             ErrorState(
                 paddingValues = paddingValues,
                 errorMessage = historialViewModel.errorMessage ?: "Error desconocido",
-                onRetry = { historialViewModel.retryLoadTransactions() }
+                onRetry = { historialViewModel.retryLoadTransactions() },
+                onClearError = { historialViewModel.clearError() }
             )
         }
         historialViewModel.transactionGroups.isEmpty() -> {
@@ -164,8 +182,14 @@ private fun HistorialContent(
             TransactionsList(
                 paddingValues = paddingValues,
                 transactionGroups = historialViewModel.transactionGroups,
+                onTransactionClick = { transaction ->
+                    historialViewModel.showEditTransactionModal(transaction)
+                },
                 onDeleteTransaction = { transactionId ->
                     historialViewModel.deleteTransaction(transactionId)
+                },
+                onDuplicateTransaction = { transaction ->
+                    historialViewModel.duplicateTransaction(transaction)
                 }
             )
         }
@@ -196,7 +220,8 @@ private fun LoadingState(paddingValues: PaddingValues) {
 private fun ErrorState(
     paddingValues: PaddingValues,
     errorMessage: String,
-    onRetry: () -> Unit
+    onRetry: () -> Unit,
+    onClearError: () -> Unit
 ) {
     Box(
         modifier = Modifier
@@ -214,13 +239,26 @@ private fun ErrorState(
                 fontSize = 16.sp
             )
 
-            Button(
-                onClick = onRetry,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = ColorsTheme.headerColor
-                )
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Text("Reintentar")
+                Button(
+                    onClick = onRetry,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = ColorsTheme.headerColor
+                    )
+                ) {
+                    Text("Reintentar")
+                }
+
+                OutlinedButton(
+                    onClick = onClearError,
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        contentColor = ColorsTheme.headerColor
+                    )
+                ) {
+                    Text("Cerrar")
+                }
             }
         }
     }
@@ -269,7 +307,9 @@ private fun EmptyState(
 private fun TransactionsList(
     paddingValues: PaddingValues,
     transactionGroups: List<TransactionGroup>,
-    onDeleteTransaction: (String) -> Unit
+    onTransactionClick: (HistorialTransaction) -> Unit,
+    onDeleteTransaction: (String) -> Unit,
+    onDuplicateTransaction: (HistorialTransaction) -> Unit
 ) {
     LazyColumn(
         modifier = Modifier
@@ -281,10 +321,9 @@ private fun TransactionsList(
         items(transactionGroups) { group ->
             TransactionGroupCard(
                 group = group,
-                onTransactionClick = { transaction ->
-                    // Funcionalidad para editar o ver detalles
-                },
-                onDeleteTransaction = onDeleteTransaction
+                onTransactionClick = onTransactionClick,
+                onDeleteTransaction = onDeleteTransaction,
+                onDuplicateTransaction = onDuplicateTransaction
             )
         }
     }
@@ -296,8 +335,9 @@ private fun TransactionsList(
 @Composable
 private fun TransactionGroupCard(
     group: TransactionGroup,
-    onTransactionClick: (HistorialTransaction) -> Unit = {},
-    onDeleteTransaction: (String) -> Unit = {}
+    onTransactionClick: (HistorialTransaction) -> Unit,
+    onDeleteTransaction: (String) -> Unit,
+    onDuplicateTransaction: (HistorialTransaction) -> Unit
 ) {
     Column {
         // Encabezado del grupo
@@ -313,7 +353,8 @@ private fun TransactionGroupCard(
             TransactionItem(
                 transaction = transaction,
                 onClick = { onTransactionClick(transaction) },
-                onDelete = { onDeleteTransaction(transaction.id) }
+                onDelete = { onDeleteTransaction(transaction.id) },
+                onDuplicate = { onDuplicateTransaction(transaction) }
             )
             Spacer(modifier = Modifier.height(8.dp))
         }
@@ -383,14 +424,15 @@ private fun TransactionGroupHeader(
 @Composable
 private fun TransactionItem(
     transaction: HistorialTransaction,
-    onClick: () -> Unit = {},
-    onDelete: () -> Unit = {}
+    onClick: () -> Unit,
+    onDelete: () -> Unit,
+    onDuplicate: () -> Unit
 ) {
     var showDeleteDialog by remember { mutableStateOf(false) }
+    var showOptionsMenu by remember { mutableStateOf(false) }
 
     Card(
         modifier = Modifier.fillMaxWidth(),
-        onClick = onClick,
         colors = CardDefaults.cardColors(
             containerColor = ColorsTheme.cardBackground
         ),
@@ -402,6 +444,7 @@ private fun TransactionItem(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
+                .clickable { onClick() }
                 .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -414,7 +457,7 @@ private fun TransactionItem(
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    imageVector = transaction.icon,
+                    painter = painterResource(id = transaction.icon),
                     contentDescription = transaction.description,
                     tint = transaction.iconColor,
                     modifier = Modifier.size(24.dp)
@@ -441,25 +484,57 @@ private fun TransactionItem(
                 )
             }
 
-            // Monto y opciones
-            Column(
-                horizontalAlignment = Alignment.End
-            ) {
-                Text(
-                    text = if (transaction.amount >= 0) "+S/${String.format("%.2f", transaction.amount)}"
-                    else "-S/${String.format("%.2f", kotlin.math.abs(transaction.amount))}",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = if (transaction.amount >= 0) ColorsTheme.incomeColor else ColorsTheme.expenseColor
-                )
+            // Monto
+            Text(
+                text = if (transaction.amount >= 0) "+S/${String.format("%.2f", transaction.amount)}"
+                else "-S/${String.format("%.2f", kotlin.math.abs(transaction.amount))}",
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold,
+                color = if (transaction.amount >= 0) ColorsTheme.incomeColor else ColorsTheme.expenseColor
+            )
 
-                TextButton(
-                    onClick = { showDeleteDialog = true },
-                    colors = ButtonDefaults.textButtonColors(
-                        contentColor = ColorsTheme.expenseColor.copy(alpha = 0.7f)
-                    )
+            // Menú de opciones
+            Box {
+                IconButton(
+                    onClick = { showOptionsMenu = true }
                 ) {
-                    Text("Eliminar", fontSize = 12.sp)
+                    Icon(
+                        imageVector = Icons.Default.MoreVert,
+                        contentDescription = "Más opciones",
+                        tint = ColorsTheme.secondaryText
+                    )
+                }
+
+                DropdownMenu(
+                    expanded = showOptionsMenu,
+                    onDismissRequest = { showOptionsMenu = false }
+                ) {
+                    DropdownMenuItem(
+                        text = { Text("Editar") },
+                        onClick = {
+                            showOptionsMenu = false
+                            onClick()
+                        }
+                    )
+                    DropdownMenuItem(
+                        text = { Text("Duplicar") },
+                        onClick = {
+                            showOptionsMenu = false
+                            onDuplicate()
+                        }
+                    )
+                    DropdownMenuItem(
+                        text = {
+                            Text(
+                                "Eliminar",
+                                color = ColorsTheme.expenseColor
+                            )
+                        },
+                        onClick = {
+                            showOptionsMenu = false
+                            showDeleteDialog = true
+                        }
+                    )
                 }
             }
         }

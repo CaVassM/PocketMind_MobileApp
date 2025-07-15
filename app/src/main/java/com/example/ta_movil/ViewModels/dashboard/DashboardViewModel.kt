@@ -333,13 +333,8 @@ class DashboardViewModel : ViewModel() {
             }
     }
 
+
     fun updateGoal(goal: SavingGoal) {
-        val currentUser = auth.currentUser
-        if (currentUser == null) {
-            errorMessage = "No hay usuario autenticado"
-            return
-        }
-        
         val goalRef = db.collection("users").document(currentUser.uid)
             .collection("savingGoals").document(goal.id)
         
@@ -350,11 +345,31 @@ class DashboardViewModel : ViewModel() {
         )
         
         goalRef.set(goalData)
-            .addOnSuccessListener {
-                loadSavingGoals()
-            }
+
+
             .addOnFailureListener { e ->
                 errorMessage = "Error al actualizar la meta: ${e.message}"
             }
     }
+
+        fun deleteSavingGoal(goalId: String) {
+            db.collection("users")
+                .document(auth.currentUser?.uid ?: "")
+                .collection("savingGoals")
+                .document(goalId)
+                .delete()
+                .addOnSuccessListener {
+                    loadSavingGoals()
+                }
+                .addOnFailureListener { exception ->
+                    errorMessage = "Error al eliminar la meta: ${exception.message}"
+                }
+        }
+
+        // AGREGADO: Método para limpiar errores
+        fun clearError() {
+            errorMessage = null
+        }
+
+
 }
