@@ -1,7 +1,9 @@
 package com.example.ta_movil.Components
 
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Create
 import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Warning
@@ -83,7 +85,7 @@ fun BottomNavigationBar(
             )
         )
 
-        // Estadísticas
+        // Historial
         NavigationBarItem(
             icon = {
                 Icon(
@@ -126,6 +128,31 @@ fun BottomNavigationBar(
             },
             selected = currentScreen == Screen.Configuracion,
             onClick = { onNavigate(Screen.Configuracion) },
+            colors = NavigationBarItemDefaults.colors(
+                selectedIconColor = Color(0xFF8B4513),
+                selectedTextColor = Color(0xFF8B4513),
+                unselectedIconColor = Color(0xFF8B4513).copy(alpha = 0.6f),
+                unselectedTextColor = Color(0xFF8B4513).copy(alpha = 0.6f),
+                indicatorColor = Color(0xFFDEB887)
+            )
+        )
+
+        NavigationBarItem(
+            icon = {
+                Icon(
+                    imageVector = Icons.Filled.Create,
+                    contentDescription = "Categorias"
+                )
+            },
+            label = {
+                Text(
+                    text = "Categorias",
+                    fontSize = 12.sp,
+                    fontWeight = if (currentScreen == Screen.Dashboard) FontWeight.Bold else FontWeight.Normal
+                )
+            },
+            selected = currentScreen == Screen.Categorias,
+            onClick = { onNavigate(Screen.Categorias) },
             colors = NavigationBarItemDefaults.colors(
                 selectedIconColor = Color(0xFF8B4513),
                 selectedTextColor = Color(0xFF8B4513),

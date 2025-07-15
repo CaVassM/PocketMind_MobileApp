@@ -23,10 +23,12 @@ import com.example.ta_movil.Views.dashboard.GoalsScreen
 import com.example.ta_movil.Views.dashboard.ConfiguracionScreen
 import com.google.firebase.auth.FirebaseAuth
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.ta_movil.ViewModels.dashboard.CategoriasViewModel
 import com.example.ta_movil.ViewModels.dashboard.HistorialModalViewModel
 import com.example.ta_movil.ViewModels.dashboard.HistorialViewModel
 import com.example.ta_movil.Views.HistorialScreen
 import com.example.ta_movil.ViewModels.dashboard.GoalsModalViewModel
+import com.example.ta_movil.Views.dashboard.CategoriasScreen
 
 @Composable
 fun MainNavigation(
@@ -90,9 +92,9 @@ fun MainNavigation(
             )
         }
 
-        // YA NO USAR. ESTE SERA UNA SECCION DE CATEGORIAS O METAS.
-        composable("historial") {
-            // HistorialScreen(navController, dashboardViewModel)
+        composable("categorias") {
+            val categoriasViewModel: CategoriasViewModel = viewModel()
+            CategoriasScreen(viewModel = categoriasViewModel, navController)
         }
         
         composable("configuracion") {

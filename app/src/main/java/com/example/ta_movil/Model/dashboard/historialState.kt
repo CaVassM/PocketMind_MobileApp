@@ -2,6 +2,7 @@ package com.example.ta_movil.Models
 
 import androidx.compose.ui.graphics.Color
 import com.example.ta_movil.ViewModels.dashboard.TransactionType
+import com.google.firebase.firestore.DocumentReference
 
 /**
  * Modelo para agrupar transacciones por fecha
@@ -20,9 +21,10 @@ data class TransactionGroup(
 data class HistorialTransaction(
     val id: String,
     val description: String,
-    val category: String,
+    val categoryId: DocumentReference?,
     val amount: Double,
     val type: TransactionType,
     val icon: Int,
-    val iconColor: Color
+    val iconColor: Color,
+    val paymentMethod: String
 )

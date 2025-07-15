@@ -5,8 +5,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
+import com.google.firebase.Timestamp
 
 // Modelo de transacción
 data class Transaction(
@@ -15,7 +17,9 @@ data class Transaction(
     val amount: Double,
     val description: String,
     val date: String,
-    val paymentMethod: String = ""
+    val paymentMethod: String = "",
+    val categoryId: DocumentReference? = null,
+    val timestamp: Long = System.currentTimeMillis()
 )
 
 data class SavingGoal(
@@ -28,6 +32,7 @@ data class SavingGoal(
 enum class Screen {
     Dashboard,
     Goals,
+    Categorias,
     IngresosEgresos,
     Configuracion
 }
@@ -71,7 +76,12 @@ class DashboardViewModel : ViewModel() {
     private val db = FirebaseFirestore.getInstance()
 
     init {
-        // No cargar datos al inicio, esperamos que el usuario se autentique primero
+        // Cargar datos al inicializar si hay un usuario autenticado
+        val currentUser = auth.currentUser
+        if (currentUser != null) {
+            loadSavingGoals()
+            loadTransactions()
+        }
     }
 
     fun loadSavingGoals() {
@@ -84,21 +94,23 @@ class DashboardViewModel : ViewModel() {
         isLoading = true
         errorMessage = null
 
-        // Primero obtener la referencia al documento del usuario
-        val userRef = db.collection("users").document(currentUser.uid)
-
-        // Luego obtener las metas de ahorro
-        userRef.collection("savingGoals")
+        db.collection("users").document(currentUser.uid)
+            .collection("savingGoals")
             .get()
             .addOnSuccessListener { documents ->
-                savingGoals = documents.map { document ->
-                    SavingGoal(
-                        id = document.id,
-                        name = document.getString("name") ?: "",
-                        targetAmount = document.getDouble("targetAmount") ?: 0.0,
-                        currentAmount = document.getDouble("currentAmount") ?: 0.0
-                    )
+                val goals = documents.mapNotNull { document ->
+                    try {
+                        SavingGoal(
+                            id = document.id,
+                            name = document.getString("name") ?: "",
+                            targetAmount = document.getDouble("targetAmount") ?: 0.0,
+                            currentAmount = document.getDouble("currentAmount") ?: 0.0
+                        )
+                    } catch (e: Exception) {
+                        null
+                    }
                 }
+                savingGoals = goals
                 isLoading = false
             }
             .addOnFailureListener { e ->
@@ -123,29 +135,40 @@ class DashboardViewModel : ViewModel() {
             .orderBy("timestamp", Query.Direction.DESCENDING)
             .get()
             .addOnSuccessListener { documents ->
-                transactions = documents.map { document ->
-                    Transaction(
-                        id = document.id,
-                        type = when (document.getString("type")) {
-                            "INCOME" -> TransactionType.INCOME
-                            "EXPENSE" -> TransactionType.EXPENSE
-                            else -> TransactionType.EXPENSE
-                        },
-                        amount = document.getDouble("amount") ?: 0.0,
-                        description = document.getString("description") ?: "",
-                        date = document.getString("date") ?: "",
-                        paymentMethod = document.getString("paymentMethod") ?: ""
-                    )
+                val transactionList = documents.mapNotNull { document ->
+                    try {
+                        Transaction(
+                            id = document.id,
+                            type = when (document.getString("type")) {
+                                "INCOME" -> TransactionType.INCOME
+                                "EXPENSE" -> TransactionType.EXPENSE
+                                else -> TransactionType.EXPENSE
+                            },
+                            amount = document.getDouble("amount") ?: 0.0,
+                            description = document.getString("description") ?: "",
+                            date = document.getString("date") ?: "",
+                            paymentMethod = document.getString("paymentMethod") ?: "",
+                            categoryId = document.get("categoryId") as? DocumentReference,
+                            timestamp = document.getLong("timestamp") ?: System.currentTimeMillis()
+                        )
+
+
+                    } catch (e: Exception) {
+                        println("Error al parsear transacción: ${e.message}")
+                        null
+                    }
                 }
+                transactions = transactionList
                 isLoading = false
+                println("Transacciones cargadas: ${transactions.size}")
             }
             .addOnFailureListener { e ->
                 errorMessage = "Error al cargar las transacciones: ${e.message}"
                 isLoading = false
+                println("Error al cargar transacciones: ${e.message}")
             }
     }
 
-    // CORREGIDO: Método addTransaction con callbacks
     fun addTransaction(
         transaction: Transaction,
         onSuccess: () -> Unit = {},
@@ -159,15 +182,13 @@ class DashboardViewModel : ViewModel() {
             return
         }
 
-        // Convertir Transaction a Map para Firestore
         val transactionMap = hashMapOf(
-            "id" to transaction.id,
-            "type" to transaction.type.name, // Convertir enum a string
+            "type" to transaction.type.name,
             "amount" to transaction.amount,
             "description" to transaction.description,
             "date" to transaction.date,
             "paymentMethod" to transaction.paymentMethod,
-            "timestamp" to System.currentTimeMillis() // Para ordenar por fecha de creación
+            "timestamp" to transaction.timestamp
         )
 
         db.collection("users")
@@ -176,24 +197,21 @@ class DashboardViewModel : ViewModel() {
             .document(transaction.id)
             .set(transactionMap)
             .addOnSuccessListener {
-                // Agregar inmediatamente a la lista local
-                transactions = listOf(transaction) + transactions
+                // Agregar a la lista local inmediatamente
+                val updatedTransactions = listOf(transaction) + transactions
+                transactions = updatedTransactions.sortedByDescending { it.timestamp }
                 errorMessage = null
-
-                // Recargar las transacciones para mantener sincronización
-                loadTransactions()
-
-                // Ejecutar callback de éxito
                 onSuccess()
+                println("Transacción agregada correctamente")
             }
             .addOnFailureListener { exception ->
                 val error = "Error al agregar la transacción: ${exception.message}"
                 errorMessage = error
                 onFailure(error)
+                println("Error al agregar transacción: ${exception.message}")
             }
     }
 
-    // CORREGIDO: Método deleteTransaction con callbacks
     fun deleteTransaction(
         transactionId: String,
         onSuccess: () -> Unit = {},
@@ -213,24 +231,20 @@ class DashboardViewModel : ViewModel() {
             .document(transactionId)
             .delete()
             .addOnSuccessListener {
-                // Eliminar inmediatamente de la lista local
+                // Eliminar de la lista local
                 transactions = transactions.filter { it.id != transactionId }
                 errorMessage = null
-
-                // Recargar las transacciones para mantener sincronización
-                loadTransactions()
-
-                // Ejecutar callback de éxito
                 onSuccess()
+                println("Transacción eliminada correctamente")
             }
             .addOnFailureListener { exception ->
                 val error = "Error al eliminar la transacción: ${exception.message}"
                 errorMessage = error
                 onFailure(error)
+                println("Error al eliminar transacción: ${exception.message}")
             }
     }
 
-    // Método para actualizar una transacción existente
     fun updateTransaction(transaction: Transaction) {
         val currentUser = auth.currentUser
         if (currentUser == null) {
@@ -242,13 +256,12 @@ class DashboardViewModel : ViewModel() {
         errorMessage = null
 
         val transactionMap = hashMapOf(
-            "id" to transaction.id,
             "type" to transaction.type.name,
             "amount" to transaction.amount,
             "description" to transaction.description,
             "date" to transaction.date,
             "paymentMethod" to transaction.paymentMethod,
-            "timestamp" to System.currentTimeMillis()
+            "timestamp" to transaction.timestamp
         )
 
         db.collection("users")
@@ -257,16 +270,17 @@ class DashboardViewModel : ViewModel() {
             .document(transaction.id)
             .set(transactionMap)
             .addOnSuccessListener {
-                // Actualizar la lista local
-                transactions = transactions.map { 
-                    if (it.id == transaction.id) transaction else it 
-                }
+                // Actualizar en la lista local
+                transactions = transactions.map {
+                    if (it.id == transaction.id) transaction else it
+                }.sortedByDescending { it.timestamp }
                 isLoading = false
-                loadTransactions() // Recargar para mantener sincronización
+                println("Transacción actualizada correctamente")
             }
             .addOnFailureListener { e ->
                 errorMessage = "Error al actualizar la transacción: ${e.message}"
                 isLoading = false
+                println("Error al actualizar transacción: ${e.message}")
             }
     }
 
@@ -294,13 +308,13 @@ class DashboardViewModel : ViewModel() {
                 "currentAmount" to goal.currentAmount
             )
         )
-        .addOnSuccessListener {
-            loadSavingGoals() // Recargar la lista
-        }
-        .addOnFailureListener { e ->
-            errorMessage = "Error al actualizar la meta: ${e.message}"
-            isLoading = false
-        }
+            .addOnSuccessListener {
+                loadSavingGoals()
+            }
+            .addOnFailureListener { e ->
+                errorMessage = "Error al actualizar la meta: ${e.message}"
+                isLoading = false
+            }
     }
 
     fun deleteSavingGoal(goalId: String) {
@@ -317,21 +331,19 @@ class DashboardViewModel : ViewModel() {
         val goalRef = userRef.collection("savingGoals").document(goalId)
 
         goalRef.delete()
-        .addOnSuccessListener {
-            loadSavingGoals() // Recargar la lista
-        }
-        .addOnFailureListener { e ->
-            errorMessage = "Error al eliminar la meta: ${e.message}"
-            isLoading = false
-        }
+            .addOnSuccessListener {
+                loadSavingGoals()
+            }
+            .addOnFailureListener { e ->
+                errorMessage = "Error al eliminar la meta: ${e.message}"
+                isLoading = false
+            }
     }
 
-    // AGREGADO: Método para limpiar errores
     fun clearError() {
         errorMessage = null
     }
 
-    // Estado para el modal de metas
     fun showAddGoalModal() {
         currentEditingGoal = null
         showAddGoalModal = true
@@ -353,17 +365,17 @@ class DashboardViewModel : ViewModel() {
             errorMessage = "No hay usuario autenticado"
             return
         }
-        
+
         val userRef = db.collection("users").document(currentUser.uid)
         val newGoalRef = userRef.collection("savingGoals").document()
-        
+
         val goal = SavingGoal(
             id = newGoalRef.id,
             name = name,
             targetAmount = targetAmount,
             currentAmount = 0.0
         )
-        
+
         newGoalRef.set(goal)
             .addOnSuccessListener {
                 loadSavingGoals()
@@ -373,20 +385,33 @@ class DashboardViewModel : ViewModel() {
             }
     }
 
-
     fun updateGoal(goal: SavingGoal) {
         val goalRef = db.collection("users").document(auth.currentUser?.uid ?: "")
             .collection("savingGoals").document(goal.id)
-        
+
         val goalData = mapOf(
             "name" to goal.name,
             "targetAmount" to goal.targetAmount,
             "currentAmount" to goal.currentAmount
         )
-        
+
         goalRef.set(goalData)
+            .addOnSuccessListener {
+                loadSavingGoals()
+            }
             .addOnFailureListener { e ->
                 errorMessage = "Error al actualizar la meta: ${e.message}"
             }
+    }
+
+    // Función para verificar si hay usuario autenticado
+    fun checkAuthenticationAndLoadData() {
+        val currentUser = auth.currentUser
+        if (currentUser != null) {
+            loadSavingGoals()
+            loadTransactions()
+        } else {
+            errorMessage = "No hay usuario autenticado"
+        }
     }
 }

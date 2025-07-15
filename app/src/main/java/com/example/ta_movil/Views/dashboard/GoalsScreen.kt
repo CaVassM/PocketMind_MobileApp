@@ -90,6 +90,7 @@ fun GoalsScreen(
                         Screen.IngresosEgresos -> navController.navigate("ingresos_egresos")
                         Screen.Configuracion -> navController.navigate("configuracion")
                         Screen.Goals -> navController.navigate("goals")
+                        Screen.Categorias -> navController.navigate("categorias")
                     }
                 }
             )

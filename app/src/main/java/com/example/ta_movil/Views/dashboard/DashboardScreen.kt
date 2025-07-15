@@ -7,6 +7,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Build
+import androidx.compose.material.icons.filled.Create
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Edit
@@ -42,6 +43,7 @@ fun DashboardScreen(
                         Screen.IngresosEgresos -> navController.navigate("ingresos_egresos")
                         Screen.Configuracion -> navController.navigate("configuracion")
                         Screen.Goals -> navController.navigate("goals")
+                        Screen.Categorias -> navController.navigate("categorias")
                     }
                 }
             )
@@ -143,5 +145,6 @@ val Screen.icon: @Composable () -> Unit
             Screen.IngresosEgresos -> Icon(Icons.Filled.Add, contentDescription = "Ingresos y Egresos")
             Screen.Configuracion -> Icon(Icons.Filled.Settings, contentDescription = "Configuración")
             Screen.Goals -> Icon(Icons.Filled.Build, contentDescription = "Metas Personales")
+            Screen.Categorias -> Icon(Icons.Filled.Create, contentDescription = "Metas Personales")
         }
     }

@@ -4,7 +4,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.example.ta_movil.Model.dashboard.transactionState
+import com.example.ta_movil.ViewModels.dashboard.Category
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -12,33 +18,94 @@ import java.util.UUID
 
 class HistorialModalViewModel : ViewModel() {
 
-    // Estados de la transacción
+    private val auth = FirebaseAuth.getInstance()
+    private val firestore = FirebaseFirestore.getInstance()
+
+    // Estado de la transacción
     private var _transactionState by mutableStateOf(transactionState())
     val transactionState: transactionState get() = _transactionState
 
-    // Estados de validación
+    // Errores de validación
     private var _amountError by mutableStateOf("")
     val amountError: String get() = _amountError
 
     private var _descriptionError by mutableStateOf("")
     val descriptionError: String get() = _descriptionError
 
+    private var _categoryError by mutableStateOf("")
+    val categoryError: String get() = _categoryError
+
     private var _isSubmitting by mutableStateOf(false)
     val isSubmitting: Boolean get() = _isSubmitting
 
-    // Funciones para actualizar el estado de la transacción
+    // Categorías
+    private var _categories by mutableStateOf<List<Category>>(emptyList())
+    val categories: List<Category> get() = _categories
+
+    private var _selectedCategoryId by mutableStateOf("")
+    val selectedCategoryId: String get() = _selectedCategoryId
+
+    private var _isLoadingCategories by mutableStateOf(false)
+    val isLoadingCategories: Boolean get() = _isLoadingCategories
+
+    init {
+        loadCategories()
+    }
+
+    /** Carga las categorías del usuario **/
+    private fun loadCategories() {
+        val userId = auth.currentUser?.uid ?: return
+        _isLoadingCategories = true
+
+        viewModelScope.launch {
+            try {
+                val snapshot = firestore
+                    .collection("users")
+                    .document(userId)
+                    .collection("categories")
+                    .get()
+                    .await()
+
+                val list = snapshot.documents.mapNotNull { doc ->
+                    try {
+                        Category(
+                            id = doc.id,
+                            name = doc.getString("name") ?: "",
+                            icon = doc.getString("icon") ?: "",
+                            color = doc.getString("color") ?: "#000000",
+                            isDefault = doc.getBoolean("isDefault") ?: false
+                        )
+                    } catch (e: Exception) {
+                        null
+                    }
+                }
+
+                _categories = list
+                _isLoadingCategories = false
+
+                if (list.isNotEmpty() && _selectedCategoryId.isEmpty()) {
+                    _selectedCategoryId = list.first().id
+                }
+            } catch (e: Exception) {
+                _isLoadingCategories = false
+                println("Error al cargar categorías: ${e.message}")
+            }
+        }
+    }
+
+    /** Updates **/
     fun updateTransactionType(type: TransactionType) {
         _transactionState = _transactionState.copy(type = type)
     }
 
     fun updateAmount(amount: String) {
         _transactionState = _transactionState.copy(amount = amount)
-        _amountError = "" // Limpiar error al escribir
+        _amountError = ""
     }
 
     fun updateDescription(description: String) {
         _transactionState = _transactionState.copy(description = description)
-        _descriptionError = "" // Limpiar error al escribir
+        _descriptionError = ""
     }
 
     fun updatePaymentMethod(method: String) {
@@ -49,18 +116,23 @@ class HistorialModalViewModel : ViewModel() {
         _transactionState = _transactionState.copy(selectedDate = date)
     }
 
-    // Función de validación
+    fun updateSelectedCategory(categoryId: String) {
+        _selectedCategoryId = categoryId
+        _categoryError = ""
+    }
+
+    /** Validación del formulario **/
     fun validateForm(): Boolean {
         var isValid = true
 
-        // Validar monto
+        // Monto
         if (_transactionState.amount.isBlank()) {
             _amountError = "El monto es requerido"
             isValid = false
         } else {
             try {
-                val amountValue = _transactionState.amount.toDouble()
-                if (amountValue <= 0) {
+                val v = _transactionState.amount.toDouble()
+                if (v <= 0) {
                     _amountError = "El monto debe ser mayor a 0"
                     isValid = false
                 } else {
@@ -72,7 +144,7 @@ class HistorialModalViewModel : ViewModel() {
             }
         }
 
-        // Validar descripción
+        // Descripción
         if (_transactionState.description.isBlank()) {
             _descriptionError = "La descripción es requerida"
             isValid = false
@@ -83,63 +155,74 @@ class HistorialModalViewModel : ViewModel() {
             _descriptionError = ""
         }
 
+        // Categoría
+        if (_selectedCategoryId.isEmpty()) {
+            _categoryError = "Debe seleccionar una categoría"
+            isValid = false
+        } else {
+            _categoryError = ""
+        }
+
         return isValid
     }
 
-    // Función para formatear la fecha
+    /** Formatea un Date a dd/MM/yyyy **/
     fun formatDate(date: Date): String {
-        val formatter = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
-        return formatter.format(date)
+        val fmt = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+        return fmt.format(date)
     }
 
-    // CORREGIDO: Función para guardar la transacción recibiendo DashboardViewModel
+    /** Guarda la transacción en Firestore **/
     fun saveTransaction(
         dashboardViewModel: DashboardViewModel,
         onSuccess: () -> Unit
     ) {
-        // Validar antes de proceder
-        if (!validateForm()) {
-            return
-        }
+        if (!validateForm()) return
 
         _isSubmitting = true
 
-        try {
-            // Crear el objeto Transaction con un ID único
-            val transaction = Transaction(
-                id = UUID.randomUUID().toString(),
-                type = _transactionState.type,
-                amount = _transactionState.amount.toDouble(),
-                description = _transactionState.description.trim(),
-                date = formatDate(_transactionState.selectedDate),
-                paymentMethod = _transactionState.paymentMethod
-            )
+        viewModelScope.launch {
+            try {
+                val userId = auth.currentUser?.uid ?: return@launch
+                val categoryRef = firestore
+                    .collection("users")
+                    .document(userId)
+                    .collection("categories")
+                    .document(_selectedCategoryId)
 
-            // Agregar callback para manejar éxito/error
-            dashboardViewModel.addTransaction(
-                transaction = transaction,
-                onSuccess = {
-                    // Resetear el formulario
-                    resetForm()
-                    _isSubmitting = false
-                    // Ejecutar callback de éxito
-                    onSuccess()
-                },
-                onFailure = { error ->
-                    _isSubmitting = false
-                    // Aquí podrías mostrar un mensaje de error
-                    // Por ejemplo, podrías tener un estado de error en el ViewModel
-                    println("Error al guardar transacción: $error")
-                }
-            )
+                // Preparamos los valores
+                val dateString = formatDate(_transactionState.selectedDate)
+                val timestampLong = _transactionState.selectedDate.time
 
-        } catch (e: Exception) {
-            _isSubmitting = false
-            println("Error inesperado: ${e.message}")
+                val data = mapOf(
+                    "type" to _transactionState.type.name,
+                    "amount" to _transactionState.amount.toDouble(),
+                    "description" to _transactionState.description.trim(),
+                    "date" to dateString,            // String "15/07/2025"
+                    "paymentMethod" to _transactionState.paymentMethod,
+                    "categoryId" to categoryRef,
+                    "timestamp" to timestampLong     // 1752…
+                )
+
+                firestore
+                    .collection("users")
+                    .document(userId)
+                    .collection("transactions")
+                    .add(data)
+                    .await()
+
+                resetForm()
+                _isSubmitting = false
+                onSuccess()
+
+            } catch (e: Exception) {
+                _isSubmitting = false
+                println("Error al guardar transacción: ${e.message}")
+            }
         }
     }
 
-    // Función para resetear el formulario
+    /** Resetea el formulario **/
     fun resetForm() {
         _transactionState = transactionState(
             type = TransactionType.EXPENSE,
@@ -150,11 +233,14 @@ class HistorialModalViewModel : ViewModel() {
         )
         _amountError = ""
         _descriptionError = ""
+        _categoryError = ""
         _isSubmitting = false
+        if (_categories.isNotEmpty()) {
+            _selectedCategoryId = _categories.first().id
+        }
     }
 
-    // Función para obtener métodos de pago
-    fun getPaymentMethods(): List<String> {
-        return listOf("Efectivo", "Tarjeta", "Transferencia", "Otro")
-    }
+    /** Métodos de pago disponibles **/
+    fun getPaymentMethods(): List<String> =
+        listOf("Efectivo", "Tarjeta", "Transferencia", "Otro")
 }

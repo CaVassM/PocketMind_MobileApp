@@ -11,5 +11,5 @@ data class transactionState(
     val amount: String = "",
     val description: String = "",
     val paymentMethod: String = "Efectivo",
-    val selectedDate: Date = Date()
+    val selectedDate: Date = Date()       // <-- Date en vez de String
 )

@@ -112,7 +112,7 @@ fun HistorialScreen(
                     when (screen) {
                         Screen.Dashboard -> navController.navigate("dashboard")
                         Screen.IngresosEgresos -> navController.navigate("ingresos_egresos")
-                        //Screen.Historial -> navController.navigate("historial")
+                        Screen.Categorias -> navController.navigate("categorias")
                         Screen.Configuracion -> navController.navigate("configuracion")
                         Screen.Goals -> navController.navigate("goals")
                     }
@@ -478,7 +478,7 @@ private fun TransactionItem(
                 )
 
                 Text(
-                    text = transaction.category,
+                    text = transaction.paymentMethod,
                     fontSize = 14.sp,
                     color = ColorsTheme.secondaryText
                 )
