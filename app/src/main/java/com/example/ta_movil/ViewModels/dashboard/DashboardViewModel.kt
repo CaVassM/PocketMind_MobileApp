@@ -27,8 +27,8 @@ data class SavingGoal(
 
 enum class Screen {
     Dashboard,
+    Goals,
     IngresosEgresos,
-    Historial,
     Configuracion
 }
 
@@ -56,6 +56,14 @@ class DashboardViewModel : ViewModel() {
 
     // Estado de error
     var errorMessage by mutableStateOf<String?>(null)
+        private set
+
+    // Estado para el modal de metas
+    var showAddGoalModal by mutableStateOf(false)
+        private set
+
+    // Estado para la meta que se está editando
+    var currentEditingGoal by mutableStateOf<SavingGoal?>(null)
         private set
 
     // Inicializar Firebase
@@ -227,49 +235,122 @@ class DashboardViewModel : ViewModel() {
     }
 
     fun updateSavingGoal(goal: SavingGoal) {
-        db.collection("users")
-            .document(auth.currentUser?.uid ?: "")
-            .collection("savingGoals")
-            .document(goal.id)
-            .set(goal)
-            .addOnSuccessListener {
-                loadSavingGoals()
-            }
-            .addOnFailureListener { exception ->
-                errorMessage = "Error al actualizar la meta: ${exception.message}"
-            }
-    }
-
-    fun updateTransaction(transaction: Transaction) {
         val currentUser = auth.currentUser
         if (currentUser == null) {
             errorMessage = "No hay usuario autenticado"
             return
         }
 
-        val transactionMap = hashMapOf(
-            "id" to transaction.id,
-            "type" to transaction.type.name,
-            "amount" to transaction.amount,
-            "description" to transaction.description,
-            "date" to transaction.date,
-            "paymentMethod" to transaction.paymentMethod,
-            "timestamp" to System.currentTimeMillis()
-        )
+        isLoading = true
+        errorMessage = null
 
-        db.collection("users")
-            .document(currentUser.uid)
-            .collection("transactions")
-            .document(transaction.id)
-            .set(transactionMap)
+        val userRef = db.collection("users").document(currentUser.uid)
+        val goalRef = userRef.collection("savingGoals").document(goal.id)
+
+        goalRef.set(
+            mapOf(
+                "name" to goal.name,
+                "targetAmount" to goal.targetAmount,
+                "currentAmount" to goal.currentAmount
+            )
+        )
+        .addOnSuccessListener {
+            loadSavingGoals() // Recargar la lista
+        }
+        .addOnFailureListener { e ->
+            errorMessage = "Error al actualizar la meta: ${e.message}"
+            isLoading = false
+        }
+    }
+
+    fun deleteSavingGoal(goalId: String) {
+        val currentUser = auth.currentUser
+        if (currentUser == null) {
+            errorMessage = "No hay usuario autenticado"
+            return
+        }
+
+        isLoading = true
+        errorMessage = null
+
+        val userRef = db.collection("users").document(currentUser.uid)
+        val goalRef = userRef.collection("savingGoals").document(goalId)
+
+        goalRef.delete()
+        .addOnSuccessListener {
+            loadSavingGoals() // Recargar la lista
+        }
+        .addOnFailureListener { e ->
+            errorMessage = "Error al eliminar la meta: ${e.message}"
+            isLoading = false
+        }
+    }
+
+    // AGREGADO: Método para limpiar errores
+    fun clearError() {
+        errorMessage = null
+    }
+
+    // Estado para el modal de metas
+    fun showAddGoalModal() {
+        currentEditingGoal = null
+        showAddGoalModal = true
+    }
+
+    fun hideAddGoalModal() {
+        currentEditingGoal = null
+        showAddGoalModal = false
+    }
+
+    fun showEditGoalModal(goal: SavingGoal) {
+        currentEditingGoal = goal
+        showAddGoalModal = true
+    }
+
+    fun saveGoal(name: String, targetAmount: Double) {
+        val currentUser = auth.currentUser
+        if (currentUser == null) {
+            errorMessage = "No hay usuario autenticado"
+            return
+        }
+        
+        val userRef = db.collection("users").document(currentUser.uid)
+        val newGoalRef = userRef.collection("savingGoals").document()
+        
+        val goal = SavingGoal(
+            id = newGoalRef.id,
+            name = name,
+            targetAmount = targetAmount,
+            currentAmount = 0.0
+        )
+        
+        newGoalRef.set(goal)
             .addOnSuccessListener {
-                loadTransactions()
+                loadSavingGoals()
             }
-            .addOnFailureListener { exception ->
-                errorMessage = "Error al actualizar la transacción: ${exception.message}"
+            .addOnFailureListener { e ->
+                errorMessage = "Error al guardar la meta: ${e.message}"
             }
     }
 
+
+    fun updateGoal(goal: SavingGoal) {
+        val goalRef = db.collection("users").document(currentUser.uid)
+            .collection("savingGoals").document(goal.id)
+        
+        val goalData = mapOf(
+            "name" to goal.name,
+            "targetAmount" to goal.targetAmount,
+            "currentAmount" to goal.currentAmount
+        )
+        
+        goalRef.set(goalData)
+
+
+            .addOnFailureListener { e ->
+                errorMessage = "Error al actualizar la meta: ${e.message}"
+            }
+    }
 
         fun deleteSavingGoal(goalId: String) {
             db.collection("users")
@@ -289,5 +370,6 @@ class DashboardViewModel : ViewModel() {
         fun clearError() {
             errorMessage = null
         }
+
 
 }
