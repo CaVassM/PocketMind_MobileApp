@@ -15,9 +15,9 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import com.example.ta_movil.ViewModels.DashboardViewModel
-import com.example.ta_movil.ViewModels.Screen
-import com.example.ta_movil.ViewModels.SavingGoal
+import com.example.ta_movil.ViewModels.dashboard.DashboardViewModel
+import com.example.ta_movil.ViewModels.dashboard.Screen
+import com.example.ta_movil.ViewModels.dashboard.SavingGoal
 import com.example.ta_movil.ui.theme.AppTheme
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.ta_movil.Components.BottomNavigationBar

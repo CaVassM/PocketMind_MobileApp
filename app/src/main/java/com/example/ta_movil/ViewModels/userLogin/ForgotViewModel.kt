@@ -1,4 +1,4 @@
-package com.example.ta_movil.ViewModels
+package com.example.ta_movil.ViewModels.userLogin
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -6,9 +6,7 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import com.example.ta_movil.Model.pagesInit.forgotState
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
 import com.google.firebase.auth.FirebaseAuthInvalidUserException
-import com.google.firebase.auth.FirebaseAuthWeakPasswordException
 
 class ForgotViewModel : ViewModel(){
     var state by mutableStateOf(forgotState())

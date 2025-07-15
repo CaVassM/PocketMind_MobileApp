@@ -1,10 +1,8 @@
 package com.example.ta_movil.Components
 
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Icon
@@ -17,7 +15,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import com.example.ta_movil.Additionals.ColorsTheme
-import com.example.ta_movil.ViewModels.Screen
+import com.example.ta_movil.ViewModels.dashboard.Screen
 
 @Composable
 fun BottomNavigationBar(

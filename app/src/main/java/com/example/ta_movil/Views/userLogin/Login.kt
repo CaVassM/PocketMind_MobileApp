@@ -13,7 +13,6 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.Label
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
@@ -42,9 +41,8 @@ import com.example.ta_movil.Components.preLogin.ButtonApp
 import com.example.ta_movil.R
 import com.example.ta_movil.Components.preLogin.ClickableText
 import com.example.ta_movil.Components.preLogin.IconGoogle
-import com.example.ta_movil.Components.preLogin.LabelText
 import com.example.ta_movil.Components.preLogin.LogoComponent
-import com.example.ta_movil.ViewModels.AuthViewModel
+import com.example.ta_movil.ViewModels.userLogin.AuthViewModel
 import com.google.firebase.auth.FirebaseAuth
 
 @Composable

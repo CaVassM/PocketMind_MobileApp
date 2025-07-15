@@ -3,9 +3,9 @@ package com.example.ta_movil.Components
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.composable
-import com.example.ta_movil.ViewModels.AuthViewModel
-import com.example.ta_movil.ViewModels.ForgotViewModel
-import com.example.ta_movil.ViewModels.RegisterViewModel
+import com.example.ta_movil.ViewModels.userLogin.AuthViewModel
+import com.example.ta_movil.ViewModels.userLogin.ForgotViewModel
+import com.example.ta_movil.ViewModels.userLogin.RegisterViewModel
 import com.example.ta_movil.Views.userLogin.Home
 import com.example.ta_movil.Views.userLogin.Login
 import com.example.ta_movil.Views.userLogin.createAccount.CreateAccount

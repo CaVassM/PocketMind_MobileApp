@@ -4,9 +4,9 @@ import androidx.compose.runtime.Composable
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.rememberNavController
-import com.example.ta_movil.ViewModels.AuthViewModel
-import com.example.ta_movil.ViewModels.ForgotViewModel
-import com.example.ta_movil.ViewModels.RegisterViewModel
+import com.example.ta_movil.ViewModels.userLogin.AuthViewModel
+import com.example.ta_movil.ViewModels.userLogin.ForgotViewModel
+import com.example.ta_movil.ViewModels.userLogin.RegisterViewModel
 import com.google.firebase.auth.FirebaseAuth
 
 @Composable

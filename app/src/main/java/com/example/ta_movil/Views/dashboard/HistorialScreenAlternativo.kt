@@ -8,7 +8,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavController
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.ta_movil.ViewModels.DashboardViewModel
+import com.example.ta_movil.ViewModels.dashboard.DashboardViewModel
 import com.example.ta_movil.ui.theme.AppTheme
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Settings

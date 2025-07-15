@@ -7,169 +7,29 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Share
-import androidx.compose.material.icons.filled.ShoppingCart
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.ta_movil.Additionals.ColorsTheme
-import com.example.ta_movil.ViewModels.DashboardViewModel
-import com.example.ta_movil.ViewModels.Transaction
-import com.example.ta_movil.ViewModels.TransactionType
 import com.example.ta_movil.Components.BottomNavigationBar
-
-import com.example.ta_movil.ViewModels.Screen
+import com.example.ta_movil.Models.HistorialTransaction
+import com.example.ta_movil.Models.TransactionGroup
+import com.example.ta_movil.ViewModels.dashboard.DashboardViewModel
+import com.example.ta_movil.ViewModels.dashboard.HistorialModalViewModel
+import com.example.ta_movil.ViewModels.dashboard.HistorialViewModel
+import com.example.ta_movil.ViewModels.dashboard.Screen
 import com.example.ta_movil.Views.dashboard.TransactionModal
-import java.text.SimpleDateFormat
-import java.util.*
-
-// Funciones auxiliares para extraer información de fecha
-private fun extractDayFromDate(dateString: String): String {
-    return try {
-        // Asumiendo formato "dd/MM/yyyy" o "yyyy-MM-dd"
-        when {
-            dateString.contains("/") -> {
-                val parts = dateString.split("/")
-                if (parts.size >= 1) parts[0] else "01"
-            }
-            dateString.contains("-") -> {
-                val parts = dateString.split("-")
-                if (parts.size >= 3) parts[2] else "01"
-            }
-            else -> {
-                // Si es timestamp o formato diferente, usar fecha actual
-                val calendar = Calendar.getInstance()
-                calendar.timeInMillis = dateString.toLongOrNull() ?: System.currentTimeMillis()
-                String.format("%02d", calendar.get(Calendar.DAY_OF_MONTH))
-            }
-        }
-    } catch (e: Exception) {
-        "01"
-    }
-}
-
-private fun extractDayOfWeekFromDate(dateString: String): String {
-    return try {
-        val calendar = Calendar.getInstance()
-        when {
-            dateString.contains("/") -> {
-                val parts = dateString.split("/")
-                if (parts.size >= 3) {
-                    val day = parts[0].toInt()
-                    val month = parts[1].toInt() - 1 // Calendar.MONTH es 0-based
-                    val year = parts[2].toInt()
-                    calendar.set(year, month, day)
-                }
-            }
-            dateString.contains("-") -> {
-                val parts = dateString.split("-")
-                if (parts.size >= 3) {
-                    val year = parts[0].toInt()
-                    val month = parts[1].toInt() - 1
-                    val day = parts[2].toInt()
-                    calendar.set(year, month, day)
-                }
-            }
-            else -> {
-                // Si es timestamp
-                calendar.timeInMillis = dateString.toLongOrNull() ?: System.currentTimeMillis()
-            }
-        }
-
-        val dayOfWeek = when (calendar.get(Calendar.DAY_OF_WEEK)) {
-            Calendar.SUNDAY -> "Domingo"
-            Calendar.MONDAY -> "Lunes"
-            Calendar.TUESDAY -> "Martes"
-            Calendar.WEDNESDAY -> "Miércoles"
-            Calendar.THURSDAY -> "Jueves"
-            Calendar.FRIDAY -> "Viernes"
-            Calendar.SATURDAY -> "Sábado"
-            else -> "Lunes"
-        }
-        dayOfWeek
-    } catch (e: Exception) {
-        "Lunes"
-    }
-}
-
-private fun formatDateForDisplay(dateString: String): String {
-    return try {
-        val calendar = Calendar.getInstance()
-        when {
-            dateString.contains("/") -> {
-                val parts = dateString.split("/")
-                if (parts.size >= 3) {
-                    val day = parts[0].toInt()
-                    val month = parts[1].toInt() - 1
-                    val year = parts[2].toInt()
-                    calendar.set(year, month, day)
-                }
-            }
-            dateString.contains("-") -> {
-                val parts = dateString.split("-")
-                if (parts.size >= 3) {
-                    val year = parts[0].toInt()
-                    val month = parts[1].toInt() - 1
-                    val day = parts[2].toInt()
-                    calendar.set(year, month, day)
-                }
-            }
-            else -> {
-                calendar.timeInMillis = dateString.toLongOrNull() ?: System.currentTimeMillis()
-            }
-        }
-
-        val monthName = when (calendar.get(Calendar.MONTH)) {
-            Calendar.JANUARY -> "Enero"
-            Calendar.FEBRUARY -> "Febrero"
-            Calendar.MARCH -> "Marzo"
-            Calendar.APRIL -> "Abril"
-            Calendar.MAY -> "Mayo"
-            Calendar.JUNE -> "Junio"
-            Calendar.JULY -> "Julio"
-            Calendar.AUGUST -> "Agosto"
-            Calendar.SEPTEMBER -> "Septiembre"
-            Calendar.OCTOBER -> "Octubre"
-            Calendar.NOVEMBER -> "Noviembre"
-            Calendar.DECEMBER -> "Diciembre"
-            else -> "Enero"
-        }
-
-        "$monthName ${calendar.get(Calendar.YEAR)}"
-    } catch (e: Exception) {
-        "Enero 2025"
-    }
-}
-
-// Datos de ejemplo para el historial
-data class TransactionGroup(
-    val date: String,
-    val dayOfMonth: String,
-    val dayOfWeek: String,
-    val totalAmount: Double,
-    val transactions: List<HistorialTransaction>
-)
-
-data class HistorialTransaction(
-    val id: String,
-    val description: String,
-    val category: String,
-    val amount: Double,
-    val type: TransactionType,
-    val icon: ImageVector,
-    val iconColor: Color
-)
 
 /**
  * Pantalla del historial que muestra todas las transacciones agrupadas por fecha
@@ -179,64 +39,20 @@ data class HistorialTransaction(
 @Composable
 fun HistorialScreen(
     navController: NavController,
-    viewModel: DashboardViewModel = viewModel()
+    dashboardViewModel: DashboardViewModel = viewModel(),
+    historialViewModel: HistorialViewModel,
+    historialModalViewModel: HistorialModalViewModel
 ) {
-    // Estado para controlar la visibilidad del modal
-    var showTransactionModal by remember { mutableStateOf(false) }
+    val historialViewModel = remember { HistorialViewModel(dashboardViewModel) }
 
-    // Cargar transacciones al iniciar la pantalla
+    // 1) Cargo transacciones al inicio
     LaunchedEffect(Unit) {
-        viewModel.loadTransactions()
+        historialViewModel.loadTransactions()
     }
 
-    // Observar cambios en el estado de error del ViewModel
-    // para mostrar mensajes de confirmación o error
-    val errorMessage = viewModel.errorMessage
-    LaunchedEffect(errorMessage) {
-        if (errorMessage != null) {
-            kotlinx.coroutines.delay(3000)
-            // Nota: Necesitarías agregar una función clearError() en el ViewModel
-        }
-    }
-
-    // Convertir transacciones del ViewModel a grupos por fecha
-    val transactionGroups = remember(viewModel.transactions) {
-        viewModel.transactions.groupBy { it.date }
-            .map { (date, transactions) ->
-                val totalAmount = transactions.sumOf { transaction ->
-                    when (transaction.type) {
-                        TransactionType.INCOME -> transaction.amount
-                        TransactionType.EXPENSE -> -transaction.amount
-                    }
-                }
-
-                TransactionGroup(
-                    date = formatDateForDisplay(date),
-                    dayOfMonth = extractDayFromDate(date),
-                    dayOfWeek = extractDayOfWeekFromDate(date),
-                    totalAmount = totalAmount,
-                    transactions = transactions.map { transaction ->
-                        HistorialTransaction(
-                            id = transaction.id,
-                            description = transaction.description,
-                            category = transaction.paymentMethod.ifEmpty { "Efectivo" },
-                            amount = when (transaction.type) {
-                                TransactionType.INCOME -> transaction.amount
-                                TransactionType.EXPENSE -> -transaction.amount
-                            },
-                            type = transaction.type,
-                            icon = when (transaction.type) {
-                                TransactionType.INCOME -> Icons.Default.Add
-                                TransactionType.EXPENSE -> Icons.Default.ShoppingCart
-                            },
-                            iconColor = when (transaction.type) {
-                                TransactionType.INCOME -> ColorsTheme.incomeColor
-                                TransactionType.EXPENSE -> ColorsTheme.expenseColor
-                            }
-                        )
-                    }
-                )
-            }
+    // 2) Cada vez que cambien las transactions en dashboard, actualizo los grupos
+    LaunchedEffect(dashboardViewModel.transactions) {
+        historialViewModel.updateTransactionGroups()
     }
 
     Scaffold(
@@ -263,7 +79,7 @@ fun HistorialScreen(
                 actions = {
                     IconButton(onClick = { /* Acción de compartir */ }) {
                         Icon(
-                            Icons.Default.Share, // Esto en realidad debe de ser un boton de logout.
+                            Icons.Default.Share,
                             contentDescription = "Compartir",
                             tint = Color.White
                         )
@@ -276,10 +92,7 @@ fun HistorialScreen(
         },
         floatingActionButton = {
             FloatingActionButton(
-                onClick = {
-                    // Mostrar el modal para agregar nueva transacción
-                    showTransactionModal = true
-                },
+                onClick = { historialViewModel.showAddTransactionModal() },
                 containerColor = ColorsTheme.fabColor,
                 contentColor = ColorsTheme.headerColor,
                 shape = CircleShape
@@ -292,9 +105,9 @@ fun HistorialScreen(
         },
         bottomBar = {
             BottomNavigationBar(
-                currentScreen = viewModel.currentScreen,
+                currentScreen = historialViewModel.currentScreen,
                 onNavigate = { screen ->
-                    viewModel.navigateTo(screen)
+                    historialViewModel.navigateTo(screen)
                     when (screen) {
                         Screen.Dashboard -> navController.navigate("dashboard")
                         Screen.IngresosEgresos -> navController.navigate("ingresos_egresos")
@@ -306,164 +119,193 @@ fun HistorialScreen(
         }
     ) { paddingValues ->
         // Contenido principal de la pantalla
-        if (viewModel.isLoading) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues),
-                contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator(
-                    color = ColorsTheme.headerColor
-                )
-            }
-        } else if (viewModel.errorMessage != null) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues),
-                contentAlignment = Alignment.Center
-            ) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    Text(
-                        text = viewModel.errorMessage ?: "Error desconocido",
-                        color = ColorsTheme.expenseColor,
-                        fontSize = 16.sp
-                    )
-
-                    Button(
-                        onClick = { viewModel.loadTransactions() },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = ColorsTheme.headerColor
-                        )
-                    ) {
-                        Text("Reintentar")
-                    }
-                }
-            }
-        } else if (transactionGroups.isEmpty()) {
-            // Estado vacío cuando no hay transacciones
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues),
-                contentAlignment = Alignment.Center
-            ) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    Text(
-                        text = "No hay transacciones registradas",
-                        color = ColorsTheme.secondaryText,
-                        fontSize = 16.sp
-                    )
-
-                    Button(
-                        onClick = { showTransactionModal = true },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = ColorsTheme.headerColor
-                        )
-                    ) {
-                        Text("Agregar primera transacción")
-                    }
-                }
-            }
-        } else {
-            // Lista de transacciones agrupadas
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-                    .padding(horizontal = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                items(transactionGroups) { group ->
-                    TransactionGroupCard(
-                        group = group,
-                        onTransactionClick = { transaction ->
-                            // Aquí podrías implementar la funcionalidad para
-                            // editar o ver detalles de una transacción
-                            // Por ejemplo, mostrar otro modal o navegar a una pantalla de detalles
-                        },
-                        onDeleteTransaction = { transactionId ->
-                            // Eliminar transacción
-                            viewModel.deleteTransaction(transactionId)
-                        }
-                    )
-                }
-            }
-        }
+        HistorialContent(
+            paddingValues = paddingValues,
+            historialViewModel = historialViewModel
+        )
     }
 
     // Modal para agregar nueva transacción
     TransactionModal(
-        isVisible = showTransactionModal,
-        onDismiss = {
-            showTransactionModal = false
-        },
-        viewModel = viewModel
+        isVisible = historialViewModel.showTransactionModal,
+        onDismiss = { historialViewModel.hideTransactionModal() },
+        viewModel = historialModalViewModel,
+        dashboardViewModel = dashboardViewModel
     )
+}
+
+/**
+ * Contenido principal de la pantalla de historial
+ */
+@Composable
+private fun HistorialContent(
+    paddingValues: PaddingValues,
+    historialViewModel: HistorialViewModel
+) {
+    when {
+        historialViewModel.isLoading -> {
+            LoadingState(paddingValues)
+        }
+        historialViewModel.errorMessage != null -> {
+            ErrorState(
+                paddingValues = paddingValues,
+                errorMessage = historialViewModel.errorMessage ?: "Error desconocido",
+                onRetry = { historialViewModel.retryLoadTransactions() }
+            )
+        }
+        historialViewModel.transactionGroups.isEmpty() -> {
+            EmptyState(
+                paddingValues = paddingValues,
+                onAddTransaction = { historialViewModel.showAddTransactionModal() }
+            )
+        }
+        else -> {
+            TransactionsList(
+                paddingValues = paddingValues,
+                transactionGroups = historialViewModel.transactionGroups,
+                onDeleteTransaction = { transactionId ->
+                    historialViewModel.deleteTransaction(transactionId)
+                }
+            )
+        }
+    }
+}
+
+/**
+ * Estado de carga
+ */
+@Composable
+private fun LoadingState(paddingValues: PaddingValues) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(paddingValues),
+        contentAlignment = Alignment.Center
+    ) {
+        CircularProgressIndicator(
+            color = ColorsTheme.headerColor
+        )
+    }
+}
+
+/**
+ * Estado de error
+ */
+@Composable
+private fun ErrorState(
+    paddingValues: PaddingValues,
+    errorMessage: String,
+    onRetry: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(paddingValues),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Text(
+                text = errorMessage,
+                color = ColorsTheme.expenseColor,
+                fontSize = 16.sp
+            )
+
+            Button(
+                onClick = onRetry,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = ColorsTheme.headerColor
+                )
+            ) {
+                Text("Reintentar")
+            }
+        }
+    }
+}
+
+/**
+ * Estado vacío
+ */
+@Composable
+private fun EmptyState(
+    paddingValues: PaddingValues,
+    onAddTransaction: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(paddingValues),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Text(
+                text = "No hay transacciones registradas",
+                color = ColorsTheme.secondaryText,
+                fontSize = 16.sp
+            )
+
+            Button(
+                onClick = onAddTransaction,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = ColorsTheme.headerColor
+                )
+            ) {
+                Text("Agregar primera transacción")
+            }
+        }
+    }
+}
+
+/**
+ * Lista de transacciones
+ */
+@Composable
+private fun TransactionsList(
+    paddingValues: PaddingValues,
+    transactionGroups: List<TransactionGroup>,
+    onDeleteTransaction: (String) -> Unit
+) {
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(paddingValues)
+            .padding(horizontal = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        items(transactionGroups) { group ->
+            TransactionGroupCard(
+                group = group,
+                onTransactionClick = { transaction ->
+                    // Funcionalidad para editar o ver detalles
+                },
+                onDeleteTransaction = onDeleteTransaction
+            )
+        }
+    }
 }
 
 /**
  * Tarjeta que muestra un grupo de transacciones por fecha
  */
 @Composable
-fun TransactionGroupCard(
+private fun TransactionGroupCard(
     group: TransactionGroup,
     onTransactionClick: (HistorialTransaction) -> Unit = {},
     onDeleteTransaction: (String) -> Unit = {}
 ) {
     Column {
-        // Fecha y total del día
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 8.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                // Número del día
-                Text(
-                    text = group.dayOfMonth,
-                    fontSize = 32.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = ColorsTheme.primaryText
-                )
-
-                Spacer(modifier = Modifier.width(16.dp))
-
-                // Día de la semana y mes
-                Column {
-                    Text(
-                        text = group.dayOfWeek,
-                        fontSize = 14.sp,
-                        color = ColorsTheme.secondaryText
-                    )
-                    Text(
-                        text = group.date,
-                        fontSize = 14.sp,
-                        color = ColorsTheme.secondaryText
-                    )
-                }
-            }
-
-            // Total del día
-            Text(
-                text = if (group.totalAmount >= 0) "+S/${String.format("%.2f", group.totalAmount)}"
-                else "-S/${String.format("%.2f", kotlin.math.abs(group.totalAmount))}",
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-                color = if (group.totalAmount >= 0) ColorsTheme.incomeColor else ColorsTheme.expenseColor
-            )
-        }
+        // Encabezado del grupo
+        TransactionGroupHeader(
+            dayOfMonth = group.dayOfMonth,
+            dayOfWeek = group.dayOfWeek,
+            date = group.date,
+            totalAmount = group.totalAmount
+        )
 
         // Lista de transacciones del día
         group.transactions.forEach { transaction ->
@@ -478,11 +320,67 @@ fun TransactionGroupCard(
 }
 
 /**
- * Item individual de transacción con opciones de interacción
+ * Encabezado del grupo de transacciones
+ */
+@Composable
+private fun TransactionGroupHeader(
+    dayOfMonth: String,
+    dayOfWeek: String,
+    date: String,
+    totalAmount: Double
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Número del día
+            Text(
+                text = dayOfMonth,
+                fontSize = 32.sp,
+                fontWeight = FontWeight.Bold,
+                color = ColorsTheme.primaryText
+            )
+
+            Spacer(modifier = Modifier.width(16.dp))
+
+            // Día de la semana y mes
+            Column {
+                Text(
+                    text = dayOfWeek,
+                    fontSize = 14.sp,
+                    color = ColorsTheme.secondaryText
+                )
+                Text(
+                    text = date,
+                    fontSize = 14.sp,
+                    color = ColorsTheme.secondaryText
+                )
+            }
+        }
+
+        // Total del día
+        Text(
+            text = if (totalAmount >= 0) "+S/${String.format("%.2f", totalAmount)}"
+            else "-S/${String.format("%.2f", kotlin.math.abs(totalAmount))}",
+            fontSize = 18.sp,
+            fontWeight = FontWeight.Bold,
+            color = if (totalAmount >= 0) ColorsTheme.incomeColor else ColorsTheme.expenseColor
+        )
+    }
+}
+
+/**
+ * Item individual de transacción
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TransactionItem(
+private fun TransactionItem(
     transaction: HistorialTransaction,
     onClick: () -> Unit = {},
     onDelete: () -> Unit = {}
@@ -535,15 +433,11 @@ fun TransactionItem(
                     color = ColorsTheme.primaryText
                 )
 
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = transaction.category,
-                        fontSize = 14.sp,
-                        color = ColorsTheme.secondaryText
-                    )
-                }
+                Text(
+                    text = transaction.category,
+                    fontSize = 14.sp,
+                    color = ColorsTheme.secondaryText
+                )
             }
 
             // Monto y opciones
@@ -558,7 +452,6 @@ fun TransactionItem(
                     color = if (transaction.amount >= 0) ColorsTheme.incomeColor else ColorsTheme.expenseColor
                 )
 
-                // Botón para eliminar (opcional)
                 TextButton(
                     onClick = { showDeleteDialog = true },
                     colors = ButtonDefaults.textButtonColors(

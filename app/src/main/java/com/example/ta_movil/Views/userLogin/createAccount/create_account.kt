@@ -50,7 +50,7 @@ import com.example.ta_movil.R
 
 import com.example.ta_movil.Components.preLogin.ClickableText
 import com.example.ta_movil.Components.preLogin.LabelText
-import com.example.ta_movil.ViewModels.RegisterViewModel
+import com.example.ta_movil.ViewModels.userLogin.RegisterViewModel
 import com.google.firebase.auth.FirebaseAuth
 
 @OptIn(ExperimentalMaterial3Api::class)

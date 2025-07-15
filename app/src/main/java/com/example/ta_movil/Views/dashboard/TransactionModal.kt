@@ -14,126 +14,58 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
-
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.example.ta_movil.Additionals.ColorsTheme
-import com.example.ta_movil.ViewModels.DashboardViewModel
-import com.example.ta_movil.ViewModels.Transaction
-import com.example.ta_movil.ViewModels.TransactionType
+import com.example.ta_movil.ViewModels.dashboard.DashboardViewModel
+import com.example.ta_movil.ViewModels.dashboard.HistorialModalViewModel
+import com.example.ta_movil.ViewModels.dashboard.TransactionType
 import java.text.SimpleDateFormat
 import java.util.*
+import android.app.DatePickerDialog
+import android.content.Context
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.LocalContext
+import java.util.Calendar
+import java.util.Date
 
-/**
- * Modal para registrar nuevas transacciones
- * Este componente permite al usuario ingresar todos los datos necesarios
- * para crear una nueva transacción y la guarda en Firestore
- */
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TransactionModal(
     isVisible: Boolean,
     onDismiss: () -> Unit,
-    viewModel: DashboardViewModel
+    viewModel: HistorialModalViewModel,
+    dashboardViewModel: DashboardViewModel // AGREGADO: Pasar el DashboardViewModel
 ) {
-    // Estados para manejar los datos del formulario
-    var transactionType by remember { mutableStateOf(TransactionType.EXPENSE) }
-    var amount by remember { mutableStateOf("") }
-    var description by remember { mutableStateOf("") }
-    var paymentMethod by remember { mutableStateOf("Efectivo") }
-    var selectedDate by remember { mutableStateOf(Date()) }
+    // Estados del DatePicker
     var showDatePicker by remember { mutableStateOf(false) }
 
-    // Estados para validación y mensajes de error
-    var amountError by remember { mutableStateOf("") }
-    var descriptionError by remember { mutableStateOf("") }
-    var isSubmitting by remember { mutableStateOf(false) }
+    // Obtener el estado del ViewModel
+    val transactionState = viewModel.transactionState
+    val amountError = viewModel.amountError
+    val descriptionError = viewModel.descriptionError
+    val isSubmitting = viewModel.isSubmitting
 
     // Opciones de métodos de pago
-    val paymentMethods = listOf("Efectivo", "Tarjeta", "Transferencia", "Otro")
+    val paymentMethods = viewModel.getPaymentMethods()
 
-    // Función para validar los datos del formulario
-    fun validateForm(): Boolean {
-        var isValid = true
-
-        // Validar monto
-        if (amount.isBlank()) {
-            amountError = "El monto es requerido"
-            isValid = false
-        } else {
-            try {
-                val amountValue = amount.toDouble()
-                if (amountValue <= 0) {
-                    amountError = "El monto debe ser mayor a 0"
-                    isValid = false
-                } else {
-                    amountError = ""
-                }
-            } catch (e: NumberFormatException) {
-                amountError = "Ingrese un monto válido"
-                isValid = false
-            }
-        }
-
-        // Validar descripción
-        if (description.isBlank()) {
-            descriptionError = "La descripción es requerida"
-            isValid = false
-        } else if (description.length < 3) {
-            descriptionError = "La descripción debe tener al menos 3 caracteres"
-            isValid = false
-        } else {
-            descriptionError = ""
-        }
-
-        return isValid
-    }
-
-    // Función para formatear la fecha
-    fun formatDate(date: Date): String {
-        val formatter = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
-        return formatter.format(date)
-    }
-
-    // Función para guardar la transacción
+    // Función para guardar la transacción - CORREGIDA
     fun saveTransaction() {
-        if (!validateForm()) return
-
-        isSubmitting = true
-
-        // Crear el objeto Transaction con un ID único
-        val transaction = Transaction(
-            id = UUID.randomUUID().toString(),
-            type = transactionType,
-            amount = amount.toDouble(),
-            description = description.trim(),
-            date = formatDate(selectedDate),
-            paymentMethod = paymentMethod
+        viewModel.saveTransaction(
+            dashboardViewModel = dashboardViewModel, // AGREGADO: Pasar el DashboardViewModel
+            onSuccess = {
+                onDismiss()
+            }
         )
-
-        // Guardar en Firestore usando el ViewModel
-        viewModel.addTransaction(transaction)
-
-        // Resetear el formulario
-        amount = ""
-        description = ""
-        paymentMethod = "Efectivo"
-        selectedDate = Date()
-        transactionType = TransactionType.EXPENSE
-        isSubmitting = false
-
-        // Cerrar el modal
-        onDismiss()
     }
 
     // Resetear errores cuando se cierra el modal
     LaunchedEffect(isVisible) {
         if (!isVisible) {
-            amountError = ""
-            descriptionError = ""
-            isSubmitting = false
+            viewModel.resetForm()
         }
     }
 
@@ -200,9 +132,9 @@ fun TransactionModal(
                     ) {
                         // Botón para Ingreso
                         FilterChip(
-                            onClick = { transactionType = TransactionType.INCOME },
+                            onClick = { viewModel.updateTransactionType(TransactionType.INCOME) },
                             label = { Text("Ingreso") },
-                            selected = transactionType == TransactionType.INCOME,
+                            selected = transactionState.type == TransactionType.INCOME,
                             colors = FilterChipDefaults.filterChipColors(
                                 selectedContainerColor = ColorsTheme.incomeColor.copy(alpha = 0.2f),
                                 selectedLabelColor = ColorsTheme.incomeColor
@@ -212,9 +144,9 @@ fun TransactionModal(
 
                         // Botón para Gasto
                         FilterChip(
-                            onClick = { transactionType = TransactionType.EXPENSE },
+                            onClick = { viewModel.updateTransactionType(TransactionType.EXPENSE) },
                             label = { Text("Gasto") },
-                            selected = transactionType == TransactionType.EXPENSE,
+                            selected = transactionState.type == TransactionType.EXPENSE,
                             colors = FilterChipDefaults.filterChipColors(
                                 selectedContainerColor = ColorsTheme.expenseColor.copy(alpha = 0.2f),
                                 selectedLabelColor = ColorsTheme.expenseColor
@@ -226,11 +158,8 @@ fun TransactionModal(
                     // Campo de monto
                     Column {
                         OutlinedTextField(
-                            value = amount,
-                            onValueChange = {
-                                amount = it
-                                amountError = "" // Limpiar error al escribir
-                            },
+                            value = transactionState.amount,
+                            onValueChange = { viewModel.updateAmount(it) },
                             label = { Text("Monto") },
                             placeholder = { Text("0.00") },
                             prefix = { Text("S/ ") },
@@ -252,11 +181,8 @@ fun TransactionModal(
                     // Campo de descripción
                     Column {
                         OutlinedTextField(
-                            value = description,
-                            onValueChange = {
-                                description = it
-                                descriptionError = "" // Limpiar error al escribir
-                            },
+                            value = transactionState.description,
+                            onValueChange = { viewModel.updateDescription(it) },
                             label = { Text("Descripción") },
                             placeholder = { Text("Ej: Compra de supermercado") },
                             isError = descriptionError.isNotEmpty(),
@@ -287,14 +213,14 @@ fun TransactionModal(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .selectable(
-                                        selected = paymentMethod == method,
-                                        onClick = { paymentMethod = method }
+                                        selected = transactionState.paymentMethod == method,
+                                        onClick = { viewModel.updatePaymentMethod(method) }
                                     ),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 RadioButton(
-                                    selected = paymentMethod == method,
-                                    onClick = { paymentMethod = method },
+                                    selected = transactionState.paymentMethod == method,
+                                    onClick = { viewModel.updatePaymentMethod(method) },
                                     colors = RadioButtonDefaults.colors(
                                         selectedColor = ColorsTheme.headerColor
                                     )
@@ -317,7 +243,7 @@ fun TransactionModal(
                     )
 
                     OutlinedTextField(
-                        value = formatDate(selectedDate),
+                        value = viewModel.formatDate(transactionState.selectedDate),
                         onValueChange = { },
                         label = { Text("Fecha") },
                         readOnly = true,
@@ -382,69 +308,62 @@ fun TransactionModal(
     if (showDatePicker) {
         DatePickerDialog(
             onDateSelected = { date ->
-                selectedDate = date
+                viewModel.updateSelectedDate(date)
                 showDatePicker = false
             },
             onDismiss = { showDatePicker = false },
-            initialDate = selectedDate
+            initialDate = transactionState.selectedDate
         )
     }
 }
 
-/**
- * Componente auxiliar para el selector de fecha
- * En una implementación real, podrías usar una librería como
- * ComposeCalendar o el DatePicker nativo de Material 3
- */
+
 @Composable
 fun DatePickerDialog(
     onDateSelected: (Date) -> Unit,
     onDismiss: () -> Unit,
     initialDate: Date
 ) {
-    // Esta es una implementación simplificada
-    // En producción, usarías el DatePicker de Material 3 o una librería especializada
-    val calendar = Calendar.getInstance()
-    calendar.time = initialDate
+    val context = LocalContext.current
 
-    Dialog(onDismissRequest = onDismiss) {
-        Card(
-            modifier = Modifier.padding(16.dp),
-            shape = RoundedCornerShape(16.dp)
-        ) {
-            Column(
-                modifier = Modifier.padding(16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text(
-                    text = "Seleccionar Fecha",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(bottom = 16.dp)
-                )
+    ShowNativeDatePicker(
+        context = context,
+        initialDate = initialDate,
+        onDateSelected = onDateSelected,
+        onDismiss = onDismiss
+    )
+}
 
-                Text(
-                    text = "Fecha actual: ${SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(initialDate)}",
-                    modifier = Modifier.padding(bottom = 16.dp)
-                )
+@Composable
+fun ShowNativeDatePicker(
+    context: Context,
+    initialDate: Date,
+    onDateSelected: (Date) -> Unit,
+    onDismiss: () -> Unit
+) {
+    val calendar = Calendar.getInstance().apply { time = initialDate }
 
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    TextButton(onClick = onDismiss) {
-                        Text("Cancelar")
-                    }
+    DisposableEffect(Unit) {
+        val datePickerDialog = DatePickerDialog(
+            context,
+            { _, year, month, dayOfMonth ->
+                val selectedCal = Calendar.getInstance()
+                selectedCal.set(year, month, dayOfMonth, 0, 0, 0)
+                selectedCal.set(Calendar.MILLISECOND, 0)
+                onDateSelected(selectedCal.time)
+            },
+            calendar.get(Calendar.YEAR),
+            calendar.get(Calendar.MONTH),
+            calendar.get(Calendar.DAY_OF_MONTH)
+        )
 
-                    Button(
-                        onClick = { onDateSelected(initialDate) },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = ColorsTheme.headerColor
-                        )
-                    ) {
-                        Text("Aceptar")
-                    }
-                }
-            }
+        datePickerDialog.setOnCancelListener { onDismiss() }
+        datePickerDialog.setOnDismissListener { onDismiss() }
+
+        datePickerDialog.show()
+
+        onDispose {
+            datePickerDialog.dismiss()
         }
     }
 }

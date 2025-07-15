@@ -25,7 +25,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.ta_movil.Components.preLogin.ButtonApp
-import com.example.ta_movil.ViewModels.ForgotViewModel
+import com.example.ta_movil.ViewModels.userLogin.ForgotViewModel
 import com.example.ta_movil.ui.theme.Nunito
 import com.example.ta_movil.ui.theme.AppTheme
 import com.google.firebase.auth.FirebaseAuth
