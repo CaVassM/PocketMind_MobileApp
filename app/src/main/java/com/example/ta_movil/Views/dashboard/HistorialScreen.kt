@@ -111,8 +111,9 @@ fun HistorialScreen(
                     when (screen) {
                         Screen.Dashboard -> navController.navigate("dashboard")
                         Screen.IngresosEgresos -> navController.navigate("ingresos_egresos")
-                        Screen.Historial -> navController.navigate("historial")
+                        //Screen.Historial -> navController.navigate("historial")
                         Screen.Configuracion -> navController.navigate("configuracion")
+                        Screen.Goals -> navController.navigate("goals")
                     }
                 }
             )

@@ -5,6 +5,7 @@ import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -52,6 +53,32 @@ fun BottomNavigationBar(
             )
         )
 
+        // Metas Personales
+        NavigationBarItem(
+            icon = {
+                Icon(
+                    imageVector = Icons.Filled.Star,
+                    contentDescription = "Metas Personales"
+                )
+            },
+            label = {
+                Text(
+                    text = "Metas",
+                    fontSize = 12.sp,
+                    fontWeight = if (currentScreen == Screen.Goals) FontWeight.Bold else FontWeight.Normal
+                )
+            },
+            selected = currentScreen == Screen.Goals,
+            onClick = { onNavigate(Screen.Goals) },
+            colors = NavigationBarItemDefaults.colors(
+                selectedIconColor = Color(0xFF8B4513),
+                selectedTextColor = Color(0xFF8B4513),
+                unselectedIconColor = Color(0xFF8B4513).copy(alpha = 0.6f),
+                unselectedTextColor = Color(0xFF8B4513).copy(alpha = 0.6f),
+                indicatorColor = Color(0xFFDEB887)
+            )
+        )
+
         // Estadísticas
         NavigationBarItem(
             icon = {
@@ -69,58 +96,6 @@ fun BottomNavigationBar(
             },
             selected = currentScreen == Screen.IngresosEgresos,
             onClick = { onNavigate(Screen.IngresosEgresos) },
-            colors = NavigationBarItemDefaults.colors(
-                selectedIconColor = Color(0xFF8B4513),
-                selectedTextColor = Color(0xFF8B4513),
-                unselectedIconColor = Color(0xFF8B4513).copy(alpha = 0.6f),
-                unselectedTextColor = Color(0xFF8B4513).copy(alpha = 0.6f),
-                indicatorColor = Color(0xFFDEB887)
-            )
-        )
-
-        // Grupos
-        NavigationBarItem(
-            icon = {
-                Icon(
-                    imageVector = Icons.Filled.DateRange,
-                    contentDescription = "Grupos"
-                )
-            },
-            label = {
-                Text(
-                    text = "Grupos",
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Normal
-                )
-            },
-            selected = false, // No tienes esta pantalla, así que siempre false
-            onClick = { /* No implementado */ },
-            colors = NavigationBarItemDefaults.colors(
-                selectedIconColor = Color(0xFF8B4513),
-                selectedTextColor = Color(0xFF8B4513),
-                unselectedIconColor = Color(0xFF8B4513).copy(alpha = 0.6f),
-                unselectedTextColor = Color(0xFF8B4513).copy(alpha = 0.6f),
-                indicatorColor = Color(0xFFDEB887)
-            )
-        )
-
-        // Historial
-        NavigationBarItem(
-            icon = {
-                Icon(
-                    imageVector = Icons.Filled.DateRange,
-                    contentDescription = "Historial"
-                )
-            },
-            label = {
-                Text(
-                    text = "Historial",
-                    fontSize = 12.sp,
-                    fontWeight = if (currentScreen == Screen.Historial) FontWeight.Bold else FontWeight.Normal
-                )
-            },
-            selected = currentScreen == Screen.Historial,
-            onClick = { onNavigate(Screen.Historial) },
             colors = NavigationBarItemDefaults.colors(
                 selectedIconColor = Color(0xFF8B4513),
                 selectedTextColor = Color(0xFF8B4513),
