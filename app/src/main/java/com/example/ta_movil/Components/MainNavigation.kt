@@ -46,6 +46,7 @@ fun MainNavigation(
 
     // ViewModels despues de iniciar a la aplicacion
     val dashboardViewModel: DashboardViewModel = viewModel()
+    val categoriasViewModel: CategoriasViewModel = viewModel()
 
     NavHost(
         navController = navController,
@@ -56,7 +57,7 @@ fun MainNavigation(
         
         // Navegación principal con BottomNavigationBar
         composable("dashboard") {
-            DashboardScreen(navController, dashboardViewModel)
+            DashboardScreen(auth, navController, dashboardViewModel, categoriasViewModel)
         }
 
         composable("goals") {
@@ -94,7 +95,6 @@ fun MainNavigation(
         }
 
         composable("categorias") {
-            val categoriasViewModel: CategoriasViewModel = viewModel()
             CategoriasScreen(viewModel = categoriasViewModel, navController)
         }
         

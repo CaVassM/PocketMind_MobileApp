@@ -29,18 +29,45 @@ import androidx.navigation.NavController
 import com.example.ta_movil.Additionals.ColorsTheme
 import com.example.ta_movil.Components.BottomNavigationBar
 import com.example.ta_movil.R
+import com.example.ta_movil.ViewModels.dashboard.CategoriasViewModel
 import com.example.ta_movil.ViewModels.dashboard.DashboardViewModel
 import com.example.ta_movil.ViewModels.dashboard.Screen
+import com.example.ta_movil.ViewModels.dashboard.TransactionType
+import com.google.firebase.auth.FirebaseAuth
+import java.util.Locale
+import java.text.SimpleDateFormat
+import java.util.*
 
+val date = Date()
+val locale = Locale("es", "ES")
+val formatter = SimpleDateFormat("EEEE, d 'de' MMMM 'del' yyyy", locale)
+val formattedDate = formatter.format(date).replaceFirstChar { it.uppercase() }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DashboardScreen(
+    auth: FirebaseAuth,
     navController: NavController,
-    dashboardViewModel: DashboardViewModel
+    dashboardViewModel: DashboardViewModel,
+    categoriasViewModel: CategoriasViewModel
 ) {
-    val categories = listOf("Todas", "Viaje", "Personal", "Hogar")
-    var selectedCategory by remember { mutableStateOf("Todas") }
+    // val categories = listOf("Todas", "Viaje", "Personal", "Hogar")
+    val categoriaUiState by categoriasViewModel.uiState.collectAsState()
+    val categories = listOf("0" to "Todas") + categoriaUiState.categories.map { it.id to it.name }
+    var selectedCategoryId by remember { mutableStateOf("0") }
+    // var selectedCategory by remember { mutableStateOf("Todas") }
+
+    // val transacciones = dashboardViewModel.transactions
+    val transacciones = if (selectedCategoryId == "0") {
+        dashboardViewModel.transactions
+    } else {
+        dashboardViewModel.transactions.filter { it.categoryId.toString() == selectedCategoryId }
+    }
+
+    val ingresos = transacciones.filter { it.type == TransactionType.INCOME }.sumOf { it.amount }
+    val egresos = transacciones.filter { it.type == TransactionType.EXPENSE }.sumOf { it.amount }
+    val ahorro = ingresos - egresos
+    val porcentajeAhorro = (ahorro / (ingresos + egresos)).toFloat().coerceIn(0f, 1f)
 
     LaunchedEffect(Unit) {
         dashboardViewModel.loadSavingGoals()
@@ -108,7 +135,7 @@ fun DashboardScreen(
 
                 // Saludo personalizado
                 Text(
-                    text = "Bienvenido(a), Carlos",
+                    text = "Bienvenido(a), " + auth.currentUser?.email ?: "Invitado",
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Medium,
                     color = ColorsTheme.primaryText
@@ -133,7 +160,7 @@ fun DashboardScreen(
                     ) {
                         // Fecha
                         Text(
-                            text = "Hoy, 21 de Abril del año 2025",
+                            text = formattedDate,
                             fontSize = 14.sp,
                             color = ColorsTheme.secondaryText,
                             fontWeight = FontWeight.Medium
@@ -142,7 +169,7 @@ fun DashboardScreen(
                         Spacer(modifier = Modifier.height(16.dp))
 
                         // Progreso circular
-                        CircularProgressWithCenterText(percentage = 0.35f)
+                        CircularProgressWithCenterText(percentage = porcentajeAhorro)
 
                         Spacer(modifier = Modifier.height(16.dp))
 
@@ -190,17 +217,17 @@ fun DashboardScreen(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    categories.forEach { category ->
+                    categories.forEach { (id, name) ->
                         FilterChip(
-                            onClick = { selectedCategory = category },
+                            onClick = { selectedCategoryId = id },
                             label = {
                                 Text(
-                                    text = category,
+                                    text = name,
                                     fontSize = 14.sp,
                                     fontWeight = FontWeight.Medium
                                 )
                             },
-                            selected = selectedCategory == category,
+                            selected = selectedCategoryId == id,
                             colors = FilterChipDefaults.filterChipColors(
                                 selectedContainerColor = ColorsTheme.headerColor,
                                 selectedLabelColor = Color.White,
@@ -209,7 +236,7 @@ fun DashboardScreen(
                             ),
                             border = FilterChipDefaults.filterChipBorder(
                                 enabled = true,
-                                selected = selectedCategory == category,
+                                selected = selectedCategoryId == id,
                                 borderColor = ColorsTheme.headerColor.copy(alpha = 0.3f),
                                 selectedBorderColor = ColorsTheme.headerColor
                             )
@@ -220,7 +247,7 @@ fun DashboardScreen(
 
             // Lista de metas de ahorro
             items(dashboardViewModel.savingGoals.filter {
-                selectedCategory == "Todas" || it.name.contains(selectedCategory, ignoreCase = true)
+                selectedCategoryId == "0"
             }) { goal ->
                 GoalCard(goal)
             }

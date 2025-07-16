@@ -37,8 +37,9 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             TA_MOVILTheme {
-
-                MainNavigation(auth, "home")
+                // Determinar el destino inicial basado en el estado de autenticación
+                val startDestination = if (auth.currentUser != null) "dashboard" else "home"
+                MainNavigation(auth, startDestination)
             }
         }
     }
