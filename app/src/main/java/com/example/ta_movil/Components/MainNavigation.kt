@@ -20,7 +20,6 @@ import com.example.ta_movil.Views.userLogin.forgotPassword.ForgotPassword
 import com.example.ta_movil.Views.userLogin.forgotPassword.PasswordSuccess
 import com.example.ta_movil.Views.dashboard.DashboardScreen
 import com.example.ta_movil.Views.dashboard.GoalsScreen
-import com.example.ta_movil.Views.dashboard.ConfiguracionScreen
 import com.google.firebase.auth.FirebaseAuth
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.ta_movil.ViewModels.dashboard.CategoriasViewModel
@@ -28,7 +27,9 @@ import com.example.ta_movil.ViewModels.dashboard.HistorialModalViewModel
 import com.example.ta_movil.ViewModels.dashboard.HistorialViewModel
 import com.example.ta_movil.Views.HistorialScreen
 import com.example.ta_movil.ViewModels.dashboard.GoalsModalViewModel
+import com.example.ta_movil.ViewModels.dashboard.ProfileViewModel
 import com.example.ta_movil.Views.dashboard.CategoriasScreen
+import com.example.ta_movil.Views.dashboard.ConfigurationScreen
 
 @Composable
 fun MainNavigation(
@@ -98,7 +99,8 @@ fun MainNavigation(
         }
         
         composable("configuracion") {
-            ConfiguracionScreen(navController, auth)
+            val configuracionViewModel: ProfileViewModel = viewModel()
+            ConfigurationScreen(navController, configuracionViewModel)
         }
     }
 }
