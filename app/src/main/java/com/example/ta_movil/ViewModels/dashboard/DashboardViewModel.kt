@@ -42,7 +42,7 @@ enum class TransactionType {
     EXPENSE
 }
 
-class DashboardViewModel : ViewModel() {
+open class DashboardViewModel : ViewModel() {
     // Estado para las metas de ahorro
     var savingGoals by mutableStateOf<List<SavingGoal>>(emptyList())
         private set
@@ -82,6 +82,11 @@ class DashboardViewModel : ViewModel() {
             loadSavingGoals()
             loadTransactions()
         }
+    }
+
+    // Para fines de preview/test
+    fun setFakeGoals(goals: List<SavingGoal>) {
+        savingGoals = goals
     }
 
     fun loadSavingGoals() {
