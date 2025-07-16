@@ -37,8 +37,8 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             TA_MOVILTheme {
-                // Siempre iniciar en login
-                MainNavigation(auth, "login")
+
+                MainNavigation(auth, "home")
             }
         }
     }

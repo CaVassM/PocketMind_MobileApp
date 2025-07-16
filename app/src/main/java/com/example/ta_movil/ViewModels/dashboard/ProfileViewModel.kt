@@ -23,11 +23,15 @@ data class ProfileUiState(
 )
 
 class ProfileViewModel(
-    private val auth: FirebaseAuth = FirebaseAuth.getInstance()
+    private val auth: FirebaseAuth = FirebaseAuth.getInstance(),
+    private val dashboardViewModel: DashboardViewModel
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ProfileUiState())
     val uiState: StateFlow<ProfileUiState> = _uiState.asStateFlow()
+
+    val currentScreen : Screen get() = dashboardViewModel.currentScreen
+
 
     init {
         loadUserProfile()

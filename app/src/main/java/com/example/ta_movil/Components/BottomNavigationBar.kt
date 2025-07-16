@@ -148,7 +148,7 @@ fun BottomNavigationBar(
                 Text(
                     text = "Categorias",
                     fontSize = 12.sp,
-                    fontWeight = if (currentScreen == Screen.Dashboard) FontWeight.Bold else FontWeight.Normal
+                    fontWeight = if (currentScreen == Screen.Categorias) FontWeight.Bold else FontWeight.Normal
                 )
             },
             selected = currentScreen == Screen.Categorias,

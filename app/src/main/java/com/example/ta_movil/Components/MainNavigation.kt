@@ -99,7 +99,9 @@ fun MainNavigation(
         }
         
         composable("configuracion") {
-            val configuracionViewModel: ProfileViewModel = viewModel()
+            val configuracionViewModel = remember(dashboardViewModel) {
+            ProfileViewModel(auth, dashboardViewModel)
+        }
             ConfigurationScreen(navController, configuracionViewModel)
         }
     }

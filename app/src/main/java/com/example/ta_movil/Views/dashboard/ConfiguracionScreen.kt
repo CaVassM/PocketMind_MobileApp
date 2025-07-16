@@ -24,7 +24,9 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.ta_movil.Additionals.ColorsTheme
+import com.example.ta_movil.Components.BottomNavigationBar
 import com.example.ta_movil.ViewModels.dashboard.ProfileViewModel
+import com.example.ta_movil.ViewModels.dashboard.Screen
 import com.example.ta_movil.ui.theme.AppTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -60,6 +62,20 @@ fun ConfigurationScreen(
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = Color(0xFF8B4513)
                 )
+            )
+        },
+        bottomBar = {
+            BottomNavigationBar(
+                currentScreen = viewModel.currentScreen,
+                onNavigate = { screen ->
+                    when (screen) {
+                        Screen.Dashboard -> navController.navigate("dashboard")
+                        Screen.IngresosEgresos -> navController.navigate("ingresos_egresos")
+                        Screen.Categorias -> navController.navigate("categorias")
+                        Screen.Configuracion -> navController.navigate("configuracion")
+                        Screen.Goals -> navController.navigate("goals")
+                    }
+                }
             )
         }
     ) { paddingValues ->
