@@ -13,6 +13,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -141,7 +142,8 @@ fun TransactionModal(
                             text = "Tipo de Transacción",
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Medium,
-                            color = ColorsTheme.primaryText
+                            color = ColorsTheme.primaryText,
+                            modifier = Modifier.padding(bottom = 8.dp)
                         )
 
                         Row(
@@ -151,11 +153,18 @@ fun TransactionModal(
                             // Botón para Ingreso
                             FilterChip(
                                 onClick = { viewModel.updateTransactionType(TransactionType.INCOME) },
-                                label = { Text("Ingreso") },
+                                label = {
+                                    Text(
+                                        "Ingreso",
+                                        fontWeight = FontWeight.Medium
+                                    )
+                                },
                                 selected = transactionState.type == TransactionType.INCOME,
                                 colors = FilterChipDefaults.filterChipColors(
-                                    selectedContainerColor = ColorsTheme.incomeColor.copy(alpha = 0.2f),
-                                    selectedLabelColor = ColorsTheme.incomeColor
+                                    selectedContainerColor = ColorsTheme.incomeColor.copy(alpha = 0.15f),
+                                    selectedLabelColor = ColorsTheme.incomeColor,
+                                    labelColor = ColorsTheme.secondaryText,
+                                    containerColor = ColorsTheme.cardBackground
                                 ),
                                 modifier = Modifier.weight(1f)
                             )
@@ -163,11 +172,18 @@ fun TransactionModal(
                             // Botón para Gasto
                             FilterChip(
                                 onClick = { viewModel.updateTransactionType(TransactionType.EXPENSE) },
-                                label = { Text("Gasto") },
+                                label = {
+                                    Text(
+                                        "Gasto",
+                                        fontWeight = FontWeight.Medium
+                                    )
+                                },
                                 selected = transactionState.type == TransactionType.EXPENSE,
                                 colors = FilterChipDefaults.filterChipColors(
-                                    selectedContainerColor = ColorsTheme.expenseColor.copy(alpha = 0.2f),
-                                    selectedLabelColor = ColorsTheme.expenseColor
+                                    selectedContainerColor = ColorsTheme.expenseColor.copy(alpha = 0.15f),
+                                    selectedLabelColor = ColorsTheme.expenseColor,
+                                    labelColor = ColorsTheme.secondaryText,
+                                    containerColor = ColorsTheme.cardBackground
                                 ),
                                 modifier = Modifier.weight(1f)
                             )
@@ -192,7 +208,11 @@ fun TransactionModal(
                             modifier = Modifier.fillMaxWidth(),
                             colors = OutlinedTextFieldDefaults.colors(
                                 focusedBorderColor = ColorsTheme.headerColor,
-                                focusedLabelColor = ColorsTheme.headerColor
+                                focusedLabelColor = ColorsTheme.headerColor,
+                                unfocusedBorderColor = ColorsTheme.secondaryText.copy(alpha = 0.5f),
+                                unfocusedLabelColor = ColorsTheme.secondaryText,
+                                focusedTextColor = ColorsTheme.primaryText,
+                                unfocusedTextColor = ColorsTheme.primaryText
                             )
                         )
                     }
@@ -211,7 +231,11 @@ fun TransactionModal(
                             modifier = Modifier.fillMaxWidth(),
                             colors = OutlinedTextFieldDefaults.colors(
                                 focusedBorderColor = ColorsTheme.headerColor,
-                                focusedLabelColor = ColorsTheme.headerColor
+                                focusedLabelColor = ColorsTheme.headerColor,
+                                unfocusedBorderColor = ColorsTheme.secondaryText.copy(alpha = 0.5f),
+                                unfocusedLabelColor = ColorsTheme.secondaryText,
+                                focusedTextColor = ColorsTheme.primaryText,
+                                unfocusedTextColor = ColorsTheme.primaryText
                             )
                         )
                     }
@@ -222,7 +246,8 @@ fun TransactionModal(
                             text = "Categoría",
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Medium,
-                            color = ColorsTheme.primaryText
+                            color = ColorsTheme.primaryText,
+                            modifier = Modifier.padding(bottom = 8.dp)
                         )
 
                         if (isLoadingCategories) {
@@ -254,34 +279,50 @@ fun TransactionModal(
                             text = "Método de Pago",
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Medium,
-                            color = ColorsTheme.primaryText
+                            color = ColorsTheme.primaryText,
+                            modifier = Modifier.padding(bottom = 8.dp)
                         )
 
-                        Column(
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = CardDefaults.cardColors(
+                                containerColor = ColorsTheme.cardBackground
+                            ),
+                            elevation = CardDefaults.cardElevation(
+                                defaultElevation = 2.dp
+                            )
                         ) {
-                            paymentMethods.forEach { method ->
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .selectable(
+                            Column(
+                                modifier = Modifier.padding(16.dp),
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                paymentMethods.forEach { method ->
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clip(RoundedCornerShape(8.dp))
+                                            .selectable(
+                                                selected = transactionState.paymentMethod == method,
+                                                onClick = { viewModel.updatePaymentMethod(method) }
+                                            )
+                                            .padding(vertical = 4.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        RadioButton(
                                             selected = transactionState.paymentMethod == method,
-                                            onClick = { viewModel.updatePaymentMethod(method) }
-                                        ),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    RadioButton(
-                                        selected = transactionState.paymentMethod == method,
-                                        onClick = { viewModel.updatePaymentMethod(method) },
-                                        colors = RadioButtonDefaults.colors(
-                                            selectedColor = ColorsTheme.headerColor
+                                            onClick = { viewModel.updatePaymentMethod(method) },
+                                            colors = RadioButtonDefaults.colors(
+                                                selectedColor = ColorsTheme.headerColor,
+                                                unselectedColor = ColorsTheme.secondaryText
+                                            )
                                         )
-                                    )
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Text(
-                                        text = method,
-                                        color = ColorsTheme.primaryText
-                                    )
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text(
+                                            text = method,
+                                            color = ColorsTheme.primaryText,
+                                            fontSize = 14.sp
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -293,7 +334,8 @@ fun TransactionModal(
                             text = "Fecha",
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Medium,
-                            color = ColorsTheme.primaryText
+                            color = ColorsTheme.primaryText,
+                            modifier = Modifier.padding(bottom = 8.dp)
                         )
 
                         OutlinedTextField(
@@ -313,7 +355,11 @@ fun TransactionModal(
                             modifier = Modifier.fillMaxWidth(),
                             colors = OutlinedTextFieldDefaults.colors(
                                 focusedBorderColor = ColorsTheme.headerColor,
-                                focusedLabelColor = ColorsTheme.headerColor
+                                focusedLabelColor = ColorsTheme.headerColor,
+                                unfocusedBorderColor = ColorsTheme.secondaryText.copy(alpha = 0.5f),
+                                unfocusedLabelColor = ColorsTheme.secondaryText,
+                                focusedTextColor = ColorsTheme.primaryText,
+                                unfocusedTextColor = ColorsTheme.primaryText
                             )
                         )
                     }
@@ -321,7 +367,9 @@ fun TransactionModal(
                     item {
                         // Botones de acción
                         Row(
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 8.dp),
                             horizontalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
                             // Botón cancelar
@@ -330,6 +378,11 @@ fun TransactionModal(
                                 modifier = Modifier.weight(1f),
                                 colors = ButtonDefaults.outlinedButtonColors(
                                     contentColor = ColorsTheme.secondaryText
+                                ),
+                                border = ButtonDefaults.outlinedButtonBorder.copy(
+                                    brush = androidx.compose.ui.graphics.SolidColor(
+                                        ColorsTheme.secondaryText.copy(alpha = 0.5f)
+                                    )
                                 )
                             ) {
                                 Text("Cancelar")
@@ -341,7 +394,8 @@ fun TransactionModal(
                                 modifier = Modifier.weight(1f),
                                 enabled = !isSubmitting,
                                 colors = ButtonDefaults.buttonColors(
-                                    containerColor = ColorsTheme.headerColor
+                                    containerColor = ColorsTheme.headerColor,
+                                    contentColor = Color.White
                                 )
                             ) {
                                 if (isSubmitting) {
@@ -399,8 +453,8 @@ fun CategorySelector(
             trailingIcon = {
                 IconButton(onClick = { expanded = !expanded }) {
                     Icon(
-                        imageVector = Icons.Default.KeyboardArrowDown,
-                        contentDescription = "Expandir categorías",
+                        imageVector = if (expanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                        contentDescription = if (expanded) "Contraer categorías" else "Expandir categorías",
                         tint = ColorsTheme.headerColor
                     )
                 }
@@ -418,38 +472,74 @@ fun CategorySelector(
                 .clickable { expanded = !expanded },
             colors = OutlinedTextFieldDefaults.colors(
                 focusedBorderColor = ColorsTheme.headerColor,
-                focusedLabelColor = ColorsTheme.headerColor
+                focusedLabelColor = ColorsTheme.headerColor,
+                unfocusedBorderColor = ColorsTheme.secondaryText.copy(alpha = 0.5f),
+                unfocusedLabelColor = ColorsTheme.secondaryText,
+                focusedTextColor = ColorsTheme.primaryText,
+                unfocusedTextColor = ColorsTheme.primaryText
             )
         )
 
-        // Dropdown de categorías
+        // Dropdown de categorías con mejor styling
         DropdownMenu(
             expanded = expanded,
             onDismissRequest = { expanded = false },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(
+                    color = ColorsTheme.cardBackground,
+                    shape = RoundedCornerShape(8.dp)
+                )
         ) {
-            categories.forEach { category ->
+            if (categories.isEmpty()) {
                 DropdownMenuItem(
                     text = {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            CategoryIcon(
-                                category = category,
-                                size = 24.dp
-                            )
-                            Spacer(modifier = Modifier.width(12.dp))
-                            Text(
-                                text = category.name,
-                                color = ColorsTheme.primaryText
-                            )
-                        }
+                        Text(
+                            text = "No hay categorías disponibles",
+                            color = ColorsTheme.secondaryText,
+                            fontSize = 14.sp
+                        )
                     },
-                    onClick = {
-                        onCategorySelected(category.id)
-                        expanded = false
-                    }
+                    onClick = { }
                 )
+            } else {
+                categories.forEach { category ->
+                    DropdownMenuItem(
+                        text = {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                CategoryIcon(
+                                    category = category,
+                                    size = 28.dp
+                                )
+                                Spacer(modifier = Modifier.width(12.dp))
+                                Text(
+                                    text = category.name,
+                                    color = ColorsTheme.primaryText,
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
+                        },
+                        onClick = {
+                            onCategorySelected(category.id)
+                            expanded = false
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(
+                                color = if (selectedCategoryId == category.id) {
+                                    ColorsTheme.headerColor.copy(alpha = 0.1f)
+                                } else {
+                                    Color.Transparent
+                                }
+                            )
+                    )
+                }
             }
         }
     }
@@ -464,23 +554,23 @@ fun CategoryIcon(
     val color = try {
         Color(android.graphics.Color.parseColor(category.color))
     } catch (e: Exception) {
-        ColorsTheme.secondaryText
+        ColorsTheme.headerColor // Color por defecto más atractivo
     }
 
     Box(
         modifier = Modifier
             .size(size)
             .clip(CircleShape)
-            .background(color.copy(alpha = 0.1f)),
+            .background(color.copy(alpha = 0.15f)),
         contentAlignment = Alignment.Center
     ) {
         // Aquí deberías usar el icono real basado en category.icon
-        // Por ahora uso un icono genérico
+        // Por ahora uso un icono genérico con mejor apariencia
         Icon(
             painter = painterResource(id = android.R.drawable.ic_menu_info_details),
             contentDescription = category.name,
             tint = color,
-            modifier = Modifier.size(size * 0.6f)
+            modifier = Modifier.size(size * 0.5f)
         )
     }
 }

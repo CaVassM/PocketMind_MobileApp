@@ -24,7 +24,6 @@ import com.example.ta_movil.Additionals.ColorsTheme
 import com.example.ta_movil.Components.BottomNavigationBar
 import com.example.ta_movil.ViewModels.dashboard.DashboardViewModel
 import com.example.ta_movil.ViewModels.dashboard.Screen
-import com.example.ta_movil.ViewModels.dashboard.SavingGoal
 import com.example.ta_movil.ViewModels.dashboard.GoalsModalViewModel
 import com.example.ta_movil.Views.dashboard.GoalCard
 
@@ -234,8 +233,6 @@ private fun GoalsContent(
                 items(viewModel.savingGoals) { goal ->
                     GoalCard(
                         goal = goal,
-                        onEdit = { viewModel.showEditGoalModal(goal) },
-                        onDelete = { viewModel.deleteSavingGoal(goal.id) }
                     )
                 }
             }
