@@ -13,7 +13,6 @@ import com.google.firebase.auth.FirebaseAuthUserCollisionException
 import com.google.firebase.auth.FirebaseAuthWeakPasswordException
 
 // El viewModel es el intermediario entre el UI y la database.
-// Por ahora, la database se enceuntra sin implementar (todo está en firebase)
 
 class AuthViewModel : ViewModel(){
 
@@ -105,8 +104,8 @@ class AuthViewModel : ViewModel(){
 
     fun logout(navController: NavController) {
         FirebaseAuth.getInstance().signOut()
-        navController.navigate("home") {
-            popUpTo("home") { inclusive = true }
+        navController.navigate("Home") {
+            popUpTo("Home") { inclusive = true }
         }
     }
 }

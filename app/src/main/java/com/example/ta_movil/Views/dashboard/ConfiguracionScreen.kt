@@ -12,6 +12,8 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -115,7 +117,7 @@ fun ConfigurationScreen(
                     .fillMaxWidth()
                     .height(200.dp)
                     .background(
-                        color = Color(0xFF795548), // Marrón más claro
+                        color = Color(0xFF795548),
                         shape = RoundedCornerShape(bottomStart = 50.dp, bottomEnd = 50.dp)
                     )
             ) {
@@ -190,15 +192,7 @@ fun ConfigurationScreen(
                     modifier = Modifier.fillMaxWidth()
                 )
 
-                Text(
-                    text = "Lima, Perú",
-                    fontSize = 16.sp,
-                    color = Color(0xFF8B4513),
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                Spacer(modifier = Modifier.height(32.dp))
+                Spacer(modifier = Modifier.height(4.dp))
 
                 // Campos del perfil
                 ProfileField(
@@ -206,15 +200,6 @@ fun ConfigurationScreen(
                     value = uiState.email,
                     isEditable = uiState.isEditMode,
                     onValueChange = { viewModel.updateEmail(it) }
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                ProfileField(
-                    label = "Número",
-                    value = uiState.phoneNumber,
-                    isEditable = uiState.isEditMode,
-                    onValueChange = { viewModel.updatePhoneNumber(it) }
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -228,81 +213,139 @@ fun ConfigurationScreen(
 
                 Spacer(modifier = Modifier.height(32.dp))
 
+                // Sección de Notificaciones
+                Text(
+                    text = "Notificaciones",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF654321)
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Notificaciones de transacciones
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Notificaciones de transacciones",
+                        modifier = Modifier.weight(1f)
+                    )
+                    Switch(
+                        checked = uiState.notificationsEnabled,
+                        onCheckedChange = { viewModel.toggleNotifications() }
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Notificaciones de metas
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Notificaciones de metas",
+                        modifier = Modifier.weight(1f)
+                    )
+                    Switch(
+                        checked = uiState.notificationsGoalsEnabled,
+                        onCheckedChange = { viewModel.toggleGoalsNotifications() }
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(32.dp))
+
                 // Botón eliminar cuenta
-                TextButton(
+                Button(
                     onClick = { viewModel.showDeleteAccountDialog() },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color.Red,
+                        contentColor = Color.White
+                    )
                 ) {
                     Text(
                         text = "Eliminar cuenta",
-                        color = Color.Red,
-                        fontSize = 14.sp
+                        fontSize = 16.sp
                     )
                 }
             }
         }
 
-        // Diálogo de logout
-        val showLogoutDialog by authSharedViewModel.showLogoutDialog.collectAsState()
-        if (showLogoutDialog) {
+        // Diálogo de confirmación de eliminación
+        if (uiState.showDeleteAccountDialog) {
             AlertDialog(
-                onDismissRequest = { authSharedViewModel.hideLogoutDialog() },
-                title = { Text("Cerrar sesión") },
-                text = { Text("¿Estás seguro que deseas cerrar sesión?") },
+                onDismissRequest = { viewModel.hideDeleteAccountDialog() },
+                title = { Text("Eliminar cuenta") },
+                text = { Text("¿Estás seguro de que quieres eliminar tu cuenta? Esta acción no se puede deshacer.") },
                 confirmButton = {
                     TextButton(
-                        onClick = {
-                            authSharedViewModel.logout(navController)
-                        }
+                        onClick = { viewModel.deleteAccount() }
                     ) {
-                        Text("Confirmar", color = ColorsTheme.primaryText)
+                        Text("Eliminar")
                     }
                 },
                 dismissButton = {
                     TextButton(
-                        onClick = {
-                            authSharedViewModel.hideLogoutDialog()
-                        }
+                        onClick = { viewModel.hideDeleteAccountDialog() }
                     ) {
-                        Text("Cancelar", color = ColorsTheme.secondaryText)
+                        Text("Cancelar")
                     }
                 }
             )
         }
+
+        // Diálogo de error si existe
+        if (uiState.errorMessage != null) {
+            Snackbar(
+                modifier = Modifier.padding(16.dp),
+                action = {
+                    TextButton(
+                        onClick = { viewModel.clearErrorMessage() }
+                    ) {
+                        Text("Cerrar")
+                    }
+                }
+            ) {
+                Text(uiState.errorMessage!!)
+            }
+        }
     }
 
-    // Diálogo de eliminación de cuenta
-    if (uiState.showDeleteAccountDialog) {
+    // Diálogo de logout
+    val showLogoutDialog by authSharedViewModel.showLogoutDialog.collectAsState()
+    if (showLogoutDialog) {
         AlertDialog(
-            onDismissRequest = { viewModel.hideDeleteAccountDialog() },
-            title = { Text("Eliminar cuenta") },
-            text = { Text("Esta acción no se puede deshacer. Se eliminarán todos tus datos.") },
+            onDismissRequest = { authSharedViewModel.hideLogoutDialog() },
+            title = { Text("Cerrar sesión") },
+            text = { Text("¿Estás seguro que deseas cerrar sesión?") },
             confirmButton = {
                 TextButton(
                     onClick = {
-                        viewModel.deleteAccount()
-                        navController.navigate("auth") {
-                            popUpTo(0)
-                        }
+                        authSharedViewModel.logout(navController)
                     }
                 ) {
-                    Text("Eliminar cuenta", color = Color.Red)
+                    Text("Confirmar", color = ColorsTheme.primaryText)
                 }
             },
             dismissButton = {
-                TextButton(onClick = { viewModel.hideDeleteAccountDialog() }) {
-                    Text("Cancelar")
+                TextButton(
+                    onClick = {
+                        authSharedViewModel.hideLogoutDialog()
+                    }
+                ) {
+                    Text("Cancelar", color = ColorsTheme.secondaryText)
                 }
             }
         )
-    }
-
-    // Mostrar error si existe
-    uiState.errorMessage?.let { error ->
-        LaunchedEffect(error) {
-            // Aquí puedes mostrar un Snackbar o Toast
-            viewModel.clearErrorMessage()
-        }
     }
 }
 
@@ -311,7 +354,8 @@ fun ProfileField(
     label: String,
     value: String,
     isEditable: Boolean,
-    onValueChange: (String) -> Unit
+    onValueChange: (String) -> Unit,
+    trailingIcon: @Composable (() -> Unit)? = null
 ) {
     Column {
         Text(
@@ -332,7 +376,8 @@ fun ProfileField(
                     focusedBorderColor = Color(0xFF8B4513),
                     unfocusedBorderColor = Color(0xFFD3D3D3)
                 ),
-                shape = RoundedCornerShape(12.dp)
+                shape = RoundedCornerShape(12.dp),
+                trailingIcon = trailingIcon
             )
         } else {
             Box(

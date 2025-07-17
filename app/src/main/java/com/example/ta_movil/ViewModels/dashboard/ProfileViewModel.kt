@@ -16,6 +16,8 @@ data class ProfileUiState(
     val email: String = "",
     val phoneNumber: String = "",
     val selectedCurrency: String = "Soles - Perú",
+    val notificationsEnabled: Boolean = true,
+    val notificationsGoalsEnabled: Boolean = true,
     val isLoading: Boolean = false,
     val isEditMode: Boolean = false,
     val showDeleteAccountDialog: Boolean = false,
@@ -77,6 +79,18 @@ class ProfileViewModel(
 
     fun updateSelectedCurrency(currency: String) {
         _uiState.value = _uiState.value.copy(selectedCurrency = currency)
+    }
+
+    fun toggleNotifications() {
+        _uiState.value = _uiState.value.copy(
+            notificationsEnabled = !_uiState.value.notificationsEnabled
+        )
+    }
+
+    fun toggleGoalsNotifications() {
+        _uiState.value = _uiState.value.copy(
+            notificationsGoalsEnabled = !_uiState.value.notificationsGoalsEnabled
+        )
     }
 
     fun saveProfileChanges() {
