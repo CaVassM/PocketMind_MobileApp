@@ -47,13 +47,17 @@ class CategoriasViewModel : ViewModel() {
     private var transactionsListener: ListenerRegistration? = null
 
     init {
-        // Inicializar categorías cuando el ViewModel se cree
+        println("CategoriasViewModel - Inicializando ViewModel")
         initializeUserCategories()
         loadCategories()
     }
 
     private fun loadCategories() {
-        val userId = auth.currentUser?.uid ?: return
+        println("CategoriasViewModel - Iniciando carga de categorías")
+        val userId = auth.currentUser?.uid ?: run {
+            println("CategoriasViewModel - No hay usuario autenticado en loadCategories")
+            return
+        }
 
         _uiState.value = _uiState.value.copy(isLoading = true)
 
@@ -64,6 +68,7 @@ class CategoriasViewModel : ViewModel() {
             .collection("categories")
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
+                    println("CategoriasViewModel - Error al cargar categorías: ${error.message}")
                     _uiState.value = _uiState.value.copy(
                         error = error.message,
                         isLoading = false
@@ -71,29 +76,33 @@ class CategoriasViewModel : ViewModel() {
                     return@addSnapshotListener
                 }
 
-                if (snapshot != null) {
-                    val categories = snapshot.documents.mapNotNull { doc ->
-                        try {
-                            Category(
-                                id = doc.id,
-                                name = doc.getString("name") ?: "",
-                                icon = doc.getString("icon") ?: "",
-                                color = doc.getString("color") ?: "#000000",
-                                isDefault = doc.getBoolean("isDefault") ?: false
-                            )
-                        } catch (e: Exception) {
-                            null
+                println("CategoriasViewModel - Categorías cargadas: ${snapshot?.documents?.size ?: 0}")
+                
+                val categories = snapshot?.documents?.mapNotNull { doc ->
+                    try {
+                        println("CategoriasViewModel - Procesando categoría: ${doc.id}")
+                        Category(
+                            id = doc.id,
+                            name = doc.getString("name") ?: "",
+                            icon = doc.getString("icon") ?: "",
+                            color = doc.getString("color") ?: "#000000",
+                            isDefault = doc.getBoolean("isDefault") ?: false
+                        ).also {
+                            println("CategoriasViewModel - Categoría procesada: ${it.name}")
                         }
+                    } catch (e: Exception) {
+                        println("CategoriasViewModel - Error al procesar categoría: ${e.message}")
+                        null
                     }
+                } ?: emptyList()
 
-                    _uiState.value = _uiState.value.copy(
-                        categories = categories,
-                        isLoading = false
-                    )
+                _uiState.value = _uiState.value.copy(
+                    categories = categories,
+                    isLoading = false
+                )
 
-                    // Cargar los montos de las transacciones
-                    loadCategoryAmounts()
-                }
+                // Cargar los montos de las transacciones
+                loadCategoryAmounts()
             }
     }
 
@@ -162,11 +171,18 @@ class CategoriasViewModel : ViewModel() {
     }
 
     fun initializeUserCategories() {
-        val userId = auth.currentUser?.uid ?: return
+        println("CategoriasViewModel - Iniciando inicialización de categorías")
+        val userId = auth.currentUser?.uid ?: run {
+            println("CategoriasViewModel - No hay usuario autenticado")
+            return
+        }
+        
+        println("CategoriasViewModel - Usuario ID: $userId")
         
         // Verificar si el usuario ya tiene categorías
         viewModelScope.launch {
             try {
+                println("CategoriasViewModel - Verificando categorías existentes")
                 val userCategories = firestore
                     .collection("users")
                     .document(userId)
@@ -175,6 +191,7 @@ class CategoriasViewModel : ViewModel() {
                     .await()
 
                 if (userCategories.isEmpty) {
+                    println("CategoriasViewModel - No hay categorías existentes, copiando globales")
                     // Copiar categorías globales al usuario
                     val globalCategories = firestore
                         .collection("categories")
@@ -182,23 +199,28 @@ class CategoriasViewModel : ViewModel() {
                         .await()
 
                     val batch = firestore.batch()
-
-                    globalCategories.documents.forEach { doc ->
+                    for (doc in globalCategories.documents) {
                         val categoryRef = firestore
                             .collection("users")
                             .document(userId)
                             .collection("categories")
                             .document(doc.id)
 
+                        println("CategoriasViewModel - Copiando categoría: ${doc.id}")
                         batch.set(categoryRef, doc.data ?: mapOf<String, Any>())
                     }
 
                     batch.commit().await()
+                    println("CategoriasViewModel - Categorías globales copiadas exitosamente")
                     
                     // Recargar categorías después de inicializar
                     loadCategories()
+                } else {
+                    println("CategoriasViewModel - Categorías existentes encontradas")
+                    loadCategories()
                 }
             } catch (e: Exception) {
+                println("CategoriasViewModel - Error en inicialización: ${e.message}")
                 _uiState.value = _uiState.value.copy(
                     error = "Error al inicializar categorías: ${e.message}"
                 )
