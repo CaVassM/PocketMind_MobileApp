@@ -4,6 +4,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
+import androidx.navigation.NavController
+import com.example.ta_movil.ViewModels.userLogin.AuthViewModel
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.FirebaseFirestore
@@ -52,8 +54,9 @@ class DashboardViewModel : ViewModel() {
         private set
 
     // Estado para la pantalla actual del BottomNavigationBar
-    var currentScreen by mutableStateOf(Screen.Dashboard)
-        private set
+    private var _currentScreen by mutableStateOf(Screen.Dashboard)
+    val currentScreen: Screen
+        get() = _currentScreen
 
     // Estado de carga
     var isLoading by mutableStateOf(false)
@@ -71,9 +74,13 @@ class DashboardViewModel : ViewModel() {
     var currentEditingGoal by mutableStateOf<SavingGoal?>(null)
         private set
 
+    // Estado para el diálogo de logout
+    var showLogoutDialog by mutableStateOf(false)
+
     // Inicializar Firebase
     private val auth = FirebaseAuth.getInstance()
     private val db = FirebaseFirestore.getInstance()
+    private val authViewModel: AuthViewModel = AuthViewModel()
 
     init {
         // Cargar datos al inicializar si hay un usuario autenticado
@@ -285,7 +292,11 @@ class DashboardViewModel : ViewModel() {
     }
 
     fun navigateTo(screen: Screen) {
-        currentScreen = screen
+        _currentScreen = screen
+    }
+
+    fun updateCurrentScreen(screen: Screen) {
+        _currentScreen = screen
     }
 
     fun updateSavingGoal(goal: SavingGoal) {
@@ -413,5 +424,9 @@ class DashboardViewModel : ViewModel() {
         } else {
             errorMessage = "No hay usuario autenticado"
         }
+    }
+
+    fun logout(navController: NavController) {
+        authViewModel.logout(navController)
     }
 }

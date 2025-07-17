@@ -9,6 +9,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -25,19 +26,20 @@ import com.example.ta_movil.Components.BottomNavigationBar
 import com.example.ta_movil.ViewModels.dashboard.DashboardViewModel
 import com.example.ta_movil.ViewModels.dashboard.Screen
 import com.example.ta_movil.ViewModels.dashboard.GoalsModalViewModel
+import com.example.ta_movil.ViewModels.dashboard.AuthSharedViewModel
 import com.example.ta_movil.Views.dashboard.GoalCard
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GoalsScreen(
     navController: NavController,
-    dashboardViewModel: DashboardViewModel = viewModel(),
-    goalsViewModel: DashboardViewModel,
-    goalsModalViewModel: GoalsModalViewModel
+    dashboardViewModel: DashboardViewModel,
+    goalsModalViewModel: GoalsModalViewModel,
+    authSharedViewModel: AuthSharedViewModel
 ) {
     // Cargar metas al inicio
     LaunchedEffect(Unit) {
-        goalsViewModel.loadSavingGoals()
+        dashboardViewModel.loadSavingGoals()
     }
 
     Scaffold(
@@ -48,15 +50,24 @@ fun GoalsScreen(
                     Text(
                         "Metas Personales",
                         color = Color.White,
-                        fontSize = 24.sp,
+                        fontSize = 20.sp,
                         fontWeight = FontWeight.Bold
                     )
                 },
                 navigationIcon = {
-                    IconButton(onClick = { navController.navigateUp() }) {
+                    IconButton(onClick = { /* Menú */ }) {
                         Icon(
                             Icons.Default.Menu,
                             contentDescription = "Menú",
+                            tint = Color.White
+                        )
+                    }
+                },
+                actions = {
+                    IconButton(onClick = { authSharedViewModel.showLogoutDialog() }) {
+                        Icon(
+                            imageVector = Icons.Default.ExitToApp,
+                            contentDescription = "Cerrar sesión",
                             tint = Color.White
                         )
                     }
@@ -68,7 +79,7 @@ fun GoalsScreen(
         },
         floatingActionButton = {
             FloatingActionButton(
-                onClick = { goalsViewModel.showAddGoalModal() },
+                onClick = { dashboardViewModel.showAddGoalModal() },
                 containerColor = ColorsTheme.fabColor,
                 contentColor = ColorsTheme.headerColor,
                 shape = CircleShape
@@ -81,9 +92,9 @@ fun GoalsScreen(
         },
         bottomBar = {
             BottomNavigationBar(
-                currentScreen = goalsViewModel.currentScreen,
+                currentScreen = dashboardViewModel.currentScreen,
                 onNavigate = { screen ->
-                    goalsViewModel.navigateTo(screen)
+                    dashboardViewModel.navigateTo(screen)
                     when (screen) {
                         Screen.Dashboard -> navController.navigate("dashboard")
                         Screen.IngresosEgresos -> navController.navigate("ingresos_egresos")
@@ -97,12 +108,40 @@ fun GoalsScreen(
     ) { paddingValues ->
         GoalsContent(
             paddingValues = paddingValues,
-            viewModel = goalsViewModel
+            viewModel = dashboardViewModel
         )
+
+        // Diálogo de logout
+        val showLogoutDialog by authSharedViewModel.showLogoutDialog.collectAsState()
+        if (showLogoutDialog) {
+            AlertDialog(
+                onDismissRequest = { authSharedViewModel.hideLogoutDialog() },
+                title = { Text("Cerrar sesión") },
+                text = { Text("¿Estás seguro que deseas cerrar sesión?") },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            authSharedViewModel.logout(navController)
+                        }
+                    ) {
+                        Text("Confirmar", color = ColorsTheme.primaryText)
+                    }
+                },
+                dismissButton = {
+                    TextButton(
+                        onClick = {
+                            authSharedViewModel.hideLogoutDialog()
+                        }
+                    ) {
+                        Text("Cancelar", color = ColorsTheme.secondaryText)
+                    }
+                }
+            )
+        }
     }
 
     // Modal para agregar/editar meta
-    if (goalsViewModel.showAddGoalModal) {
+    if (dashboardViewModel.showAddGoalModal) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -123,7 +162,7 @@ fun GoalsScreen(
                         .padding(24.dp)
                 ) {
                     Text(
-                        text = if (goalsViewModel.currentEditingGoal != null) "Editar Meta" else "Nueva Meta",
+                        text = if (dashboardViewModel.currentEditingGoal != null) "Editar Meta" else "Nueva Meta",
                         color = ColorsTheme.headerColor,
                         fontSize = 24.sp,
                         fontWeight = FontWeight.Bold
@@ -131,8 +170,8 @@ fun GoalsScreen(
                     
                     Spacer(modifier = Modifier.height(24.dp))
 
-                    var name by remember { mutableStateOf(goalsViewModel.currentEditingGoal?.name ?: "") }
-                    var targetAmount by remember { mutableStateOf(goalsViewModel.currentEditingGoal?.targetAmount?.toString() ?: "") }
+                    var name by remember { mutableStateOf(dashboardViewModel.currentEditingGoal?.name ?: "") }
+                    var targetAmount by remember { mutableStateOf(dashboardViewModel.currentEditingGoal?.targetAmount?.toString() ?: "") }
                     var nameError by remember { mutableStateOf(false) }
                     var amountError by remember { mutableStateOf(false) }
 
@@ -167,7 +206,7 @@ fun GoalsScreen(
                         horizontalArrangement = Arrangement.End
                     ) {
                         TextButton(
-                            onClick = { goalsViewModel.hideAddGoalModal() },
+                            onClick = { dashboardViewModel.hideAddGoalModal() },
                             colors = ButtonDefaults.textButtonColors(
                                 contentColor = ColorsTheme.headerColor
                             )
@@ -181,8 +220,8 @@ fun GoalsScreen(
                             onClick = {
                                 if (!nameError && !amountError) {
                                     val amount = targetAmount.toDouble()
-                                    goalsViewModel.saveGoal(name, amount)
-                                    goalsViewModel.hideAddGoalModal()
+                                    dashboardViewModel.saveGoal(name, amount)
+                                    dashboardViewModel.hideAddGoalModal()
                                 }
                             },
                             colors = ButtonDefaults.buttonColors(

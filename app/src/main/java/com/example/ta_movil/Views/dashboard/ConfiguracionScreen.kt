@@ -10,6 +10,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.ExitToApp
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -25,6 +26,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.ta_movil.Additionals.ColorsTheme
 import com.example.ta_movil.Components.BottomNavigationBar
+import com.example.ta_movil.ViewModels.dashboard.AuthSharedViewModel
 import com.example.ta_movil.ViewModels.dashboard.ProfileViewModel
 import com.example.ta_movil.ViewModels.dashboard.Screen
 import com.example.ta_movil.ui.theme.AppTheme
@@ -33,34 +35,45 @@ import com.example.ta_movil.ui.theme.AppTheme
 @Composable
 fun ConfigurationScreen(
     navController: NavController,
-    viewModel: ProfileViewModel = viewModel()
+    viewModel: ProfileViewModel = viewModel(),
+    authSharedViewModel: AuthSharedViewModel
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val scrollState = rememberScrollState()
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
+        containerColor = ColorsTheme.backgroundColor,
         topBar = {
             TopAppBar(
-                title = { Text("Perfil") },
+                title = {
+                    Text(
+                        "Configuración",
+                        color = Color.White,
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                },
                 navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
+                    IconButton(onClick = { /* Menú */ }) {
                         Icon(
-                            imageVector = Icons.Default.ArrowBack,
-                            contentDescription = "Volver"
+                            Icons.Default.Menu,
+                            contentDescription = "Menú",
+                            tint = Color.White
                         )
                     }
                 },
                 actions = {
-                    IconButton(onClick = { viewModel.showLogoutDialog() }) {
+                    IconButton(onClick = { authSharedViewModel.showLogoutDialog() }) {
                         Icon(
                             imageVector = Icons.Default.ExitToApp,
-                            contentDescription = "Cerrar sesión"
+                            contentDescription = "Cerrar sesión",
+                            tint = Color.White
                         )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color(0xFF8B4513)
+                    containerColor = ColorsTheme.headerColor
                 )
             )
         },
@@ -69,11 +82,21 @@ fun ConfigurationScreen(
                 currentScreen = viewModel.currentScreen,
                 onNavigate = { screen ->
                     when (screen) {
-                        Screen.Dashboard -> navController.navigate("dashboard")
-                        Screen.IngresosEgresos -> navController.navigate("ingresos_egresos")
-                        Screen.Categorias -> navController.navigate("categorias")
-                        Screen.Configuracion -> navController.navigate("configuracion")
-                        Screen.Goals -> navController.navigate("goals")
+                        Screen.Dashboard -> navController.navigate("dashboard") {
+                            popUpTo("dashboard") { inclusive = true }
+                        }
+                        Screen.IngresosEgresos -> navController.navigate("ingresos_egresos") {
+                            popUpTo("ingresos_egresos") { inclusive = true }
+                        }
+                        Screen.Categorias -> navController.navigate("categorias") {
+                            popUpTo("categorias") { inclusive = true }
+                        }
+                        Screen.Configuracion -> navController.navigate("configuracion") {
+                            popUpTo("configuracion") { inclusive = true }
+                        }
+                        Screen.Goals -> navController.navigate("goals") {
+                            popUpTo("goals") { inclusive = true }
+                        }
                     }
                 }
             )
@@ -92,7 +115,7 @@ fun ConfigurationScreen(
                     .fillMaxWidth()
                     .height(200.dp)
                     .background(
-                        color = Color(0xFF513C31),
+                        color = Color(0xFF795548), // Marrón más claro
                         shape = RoundedCornerShape(bottomStart = 50.dp, bottomEnd = 50.dp)
                     )
             ) {
@@ -126,7 +149,8 @@ fun ConfigurationScreen(
                         ) {
                             Text(
                                 text = "🐷",
-                                fontSize = 40.sp
+                                fontSize = 40.sp,
+                                color = Color.White
                             )
                         }
 
@@ -217,32 +241,34 @@ fun ConfigurationScreen(
                 }
             }
         }
-    }
 
-    // Diálogo de cierre de sesión
-    if (uiState.showLogoutDialog) {
-        AlertDialog(
-            onDismissRequest = { viewModel.hideLogoutDialog() },
-            title = { Text("Cerrar sesión") },
-            text = { Text("¿Estás seguro de que quieres cerrar sesión?") },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        viewModel.logout()
-                        navController.navigate("auth") {
-                            popUpTo(0)
+        // Diálogo de logout
+        val showLogoutDialog by authSharedViewModel.showLogoutDialog.collectAsState()
+        if (showLogoutDialog) {
+            AlertDialog(
+                onDismissRequest = { authSharedViewModel.hideLogoutDialog() },
+                title = { Text("Cerrar sesión") },
+                text = { Text("¿Estás seguro que deseas cerrar sesión?") },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            authSharedViewModel.logout(navController)
                         }
+                    ) {
+                        Text("Confirmar", color = ColorsTheme.primaryText)
                     }
-                ) {
-                    Text("Cerrar sesión", color = Color.Red)
+                },
+                dismissButton = {
+                    TextButton(
+                        onClick = {
+                            authSharedViewModel.hideLogoutDialog()
+                        }
+                    ) {
+                        Text("Cancelar", color = ColorsTheme.secondaryText)
+                    }
                 }
-            },
-            dismissButton = {
-                TextButton(onClick = { viewModel.hideLogoutDialog() }) {
-                    Text("Cancelar")
-                }
-            }
-        )
+            )
+        }
     }
 
     // Diálogo de eliminación de cuenta

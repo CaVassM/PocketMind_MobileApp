@@ -11,6 +11,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -27,6 +28,7 @@ import com.example.ta_movil.Additionals.ColorsTheme
 import com.example.ta_movil.Components.BottomNavigationBar
 import com.example.ta_movil.Models.HistorialTransaction
 import com.example.ta_movil.Models.TransactionGroup
+import com.example.ta_movil.ViewModels.dashboard.AuthSharedViewModel
 import com.example.ta_movil.ViewModels.dashboard.DashboardViewModel
 import com.example.ta_movil.ViewModels.dashboard.HistorialModalViewModel
 import com.example.ta_movil.ViewModels.dashboard.HistorialViewModel
@@ -44,7 +46,8 @@ fun HistorialScreen(
     navController: NavController,
     dashboardViewModel: DashboardViewModel,
     historialViewModel: HistorialViewModel,
-    historialModalViewModel: HistorialModalViewModel
+    historialModalViewModel: HistorialModalViewModel,
+    authSharedViewModel: AuthSharedViewModel
 ) {
     // Cargar transacciones al inicio
     LaunchedEffect(Unit) {
@@ -82,6 +85,13 @@ fun HistorialScreen(
                         Icon(
                             Icons.Default.Share,
                             contentDescription = "Compartir",
+                            tint = Color.White
+                        )
+                    }
+                    IconButton(onClick = { authSharedViewModel.showLogoutDialog() }) {
+                        Icon(
+                            imageVector = Icons.Default.ExitToApp,
+                            contentDescription = "Cerrar sesión",
                             tint = Color.White
                         )
                     }
@@ -125,31 +135,60 @@ fun HistorialScreen(
             paddingValues = paddingValues,
             historialViewModel = historialViewModel
         )
+
+        // Diálogo de logout
+        val showLogoutDialog by authSharedViewModel.showLogoutDialog.collectAsState()
+        if (showLogoutDialog) {
+            AlertDialog(
+                onDismissRequest = { authSharedViewModel.hideLogoutDialog() },
+                title = { Text("Cerrar sesión") },
+                text = { Text("¿Estás seguro que deseas cerrar sesión?") },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            authSharedViewModel.logout(navController)
+                        }
+                    ) {
+                        Text("Confirmar", color = ColorsTheme.primaryText)
+                    }
+                },
+                dismissButton = {
+                    TextButton(
+                        onClick = {
+                            authSharedViewModel.hideLogoutDialog()
+                        }
+                    ) {
+                        Text("Cancelar", color = ColorsTheme.secondaryText)
+                    }
+                }
+            )
+        }
+
+        // Modal para agregar nueva transacción
+        TransactionModal(
+            isVisible = historialViewModel.showTransactionModal,
+            onDismiss = { historialViewModel.hideTransactionModal() },
+            viewModel = historialModalViewModel,
+            dashboardViewModel = dashboardViewModel
+        )
+
+        // Modal para editar transacción
+        EditTransactionModal(
+            isVisible = historialViewModel.showEditTransactionModal,
+            onDismiss = { historialViewModel.hideEditTransactionModal() },
+            transaction = historialViewModel.selectedTransaction,
+            amount = historialViewModel.editAmount,
+            description = historialViewModel.editDescription,
+            date = historialViewModel.editDate,
+            paymentMethod = historialViewModel.editPaymentMethod,
+            transactionType = historialViewModel.editTransactionType,
+            onAmountChange = { historialViewModel.updateEditAmount(it) },
+            onDescriptionChange = { historialViewModel.updateEditDescription(it) },
+            onDateChange = { historialViewModel.updateEditDate(it) },
+            onSave = { historialViewModel.saveEditedTransaction() }
+        )
     }
 
-    // Modal para agregar nueva transacción
-    TransactionModal(
-        isVisible = historialViewModel.showTransactionModal,
-        onDismiss = { historialViewModel.hideTransactionModal() },
-        viewModel = historialModalViewModel,
-        dashboardViewModel = dashboardViewModel
-    )
-
-    // Modal para editar transacción
-    EditTransactionModal(
-        isVisible = historialViewModel.showEditTransactionModal,
-        onDismiss = { historialViewModel.hideEditTransactionModal() },
-        transaction = historialViewModel.selectedTransaction,
-        amount = historialViewModel.editAmount,
-        description = historialViewModel.editDescription,
-        date = historialViewModel.editDate,
-        paymentMethod = historialViewModel.editPaymentMethod,
-        transactionType = historialViewModel.editTransactionType,
-        onAmountChange = { historialViewModel.updateEditAmount(it) },
-        onDescriptionChange = { historialViewModel.updateEditDescription(it) },
-        onDateChange = { historialViewModel.updateEditDate(it) },
-        onSave = { historialViewModel.saveEditedTransaction() }
-    )
 }
 
 /**

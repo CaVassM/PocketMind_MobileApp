@@ -4,13 +4,16 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
+import androidx.navigation.NavHost
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.ta_movil.ViewModels.userLogin.AuthViewModel
 import com.example.ta_movil.ViewModels.userLogin.ForgotViewModel
 import com.example.ta_movil.ViewModels.userLogin.RegisterViewModel
+import com.example.ta_movil.ViewModels.dashboard.AuthSharedViewModel
 import com.example.ta_movil.ViewModels.dashboard.DashboardViewModel
+import com.example.ta_movil.ViewModels.dashboard.Screen
 import com.example.ta_movil.Views.userLogin.Login
 import com.example.ta_movil.Views.userLogin.Home
 import com.example.ta_movil.Views.userLogin.createAccount.CreateAccount
@@ -39,12 +42,13 @@ fun MainNavigation(
     val navController = rememberNavController()
     
     // Inicializar ViewModel
-    // ViewModels antes de iniciar a la aplicacion
+    // ViewModels antes de iniciar a la aplicación
     val authViewModel: AuthViewModel = viewModel()
     val registerViewModel: RegisterViewModel = viewModel()
     val forgotViewModel: ForgotViewModel = viewModel()
+    val authSharedViewModel: AuthSharedViewModel = viewModel()
 
-    // ViewModels despues de iniciar a la aplicacion
+    // ViewModels después de iniciar a la aplicación
     val dashboardViewModel: DashboardViewModel = viewModel()
     val categoriasViewModel: CategoriasViewModel = viewModel()
 
@@ -57,7 +61,13 @@ fun MainNavigation(
         
         // Navegación principal con BottomNavigationBar
         composable("dashboard") {
-            DashboardScreen(auth, navController, dashboardViewModel, categoriasViewModel)
+            DashboardScreen(
+                auth = auth,
+                navController = navController,
+                dashboardViewModel = dashboardViewModel,
+                categoriasViewModel = categoriasViewModel,
+                authSharedViewModel = authSharedViewModel
+            )
         }
 
         composable("goals") {
@@ -65,19 +75,17 @@ fun MainNavigation(
             val goalsModalViewModel: GoalsModalViewModel = viewModel()
 
             // 4) Lanza tu pantalla
+            dashboardViewModel.navigateTo(Screen.Goals)
             GoalsScreen(
-                navController,
-                dashboardViewModel,
-                dashboardViewModel,
-                goalsModalViewModel
+                navController = navController,
+                dashboardViewModel = dashboardViewModel,
+                goalsModalViewModel = goalsModalViewModel,
+                authSharedViewModel = authSharedViewModel
             )
         }
 
         composable("ingresos_egresos") {
-
-
             // 2) Crea tu HistorialViewModel pasándole ese dashboardViewModel
-            //    Usamos `remember` para que Compose lo retenga mientras el composable viva
             val historialViewModel = remember(dashboardViewModel) {
                 HistorialViewModel(dashboardViewModel)
             }
@@ -86,23 +94,38 @@ fun MainNavigation(
             val historialModalViewModel: HistorialModalViewModel = viewModel()
 
             // 4) Lanza tu pantalla
+            dashboardViewModel.navigateTo(Screen.IngresosEgresos)
             HistorialScreen(
-                navController,
-                dashboardViewModel,
-                historialViewModel,
-                historialModalViewModel
+                navController = navController,
+                dashboardViewModel = dashboardViewModel,
+                historialViewModel = historialViewModel,
+                historialModalViewModel = historialModalViewModel,
+                authSharedViewModel = authSharedViewModel
+            )
+        }
+
+        composable("configuracion") {
+            val profileViewModel: ProfileViewModel = viewModel {
+                ProfileViewModel(
+                    auth = auth,
+                    dashboardViewModel = dashboardViewModel
+                )
+            }
+            dashboardViewModel.navigateTo(Screen.Configuracion)
+            ConfigurationScreen(
+                navController = navController,
+                viewModel = profileViewModel,
+                authSharedViewModel = authSharedViewModel
             )
         }
 
         composable("categorias") {
-            CategoriasScreen(viewModel = categoriasViewModel, navController)
-        }
-        
-        composable("configuracion") {
-            val configuracionViewModel = remember(dashboardViewModel) {
-            ProfileViewModel(auth, dashboardViewModel)
-        }
-            ConfigurationScreen(navController, configuracionViewModel)
+            dashboardViewModel.navigateTo(Screen.Categorias)
+            CategoriasScreen(
+                viewModel = categoriasViewModel,
+                navController = navController,
+                authSharedViewModel = authSharedViewModel
+            )
         }
     }
 }

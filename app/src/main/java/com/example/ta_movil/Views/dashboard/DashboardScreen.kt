@@ -8,6 +8,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.ThumbUp
@@ -26,9 +27,11 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.ta_movil.Additionals.ColorsTheme
 import com.example.ta_movil.Components.BottomNavigationBar
 import com.example.ta_movil.R
+import com.example.ta_movil.ViewModels.dashboard.AuthSharedViewModel
 import com.example.ta_movil.ViewModels.dashboard.CategoriasViewModel
 import com.example.ta_movil.ViewModels.dashboard.DashboardViewModel
 import com.example.ta_movil.ViewModels.dashboard.Screen
@@ -49,7 +52,8 @@ fun DashboardScreen(
     auth: FirebaseAuth,
     navController: NavController,
     dashboardViewModel: DashboardViewModel,
-    categoriasViewModel: CategoriasViewModel
+    categoriasViewModel: CategoriasViewModel,
+    authSharedViewModel: AuthSharedViewModel
 ) {
     // val categories = listOf("Todas", "Viaje", "Personal", "Hogar")
     val categoriaUiState by categoriasViewModel.uiState.collectAsState()
@@ -95,10 +99,10 @@ fun DashboardScreen(
                     }
                 },
                 actions = {
-                    IconButton(onClick = { /* Compartir */ }) {
+                    IconButton(onClick = { authSharedViewModel.showLogoutDialog() }) {
                         Icon(
-                            imageVector = Icons.Default.Share,
-                            contentDescription = "Compartir",
+                            imageVector = Icons.Default.ExitToApp,
+                            contentDescription = "Cerrar sesión",
                             tint = Color.White
                         )
                     }
@@ -123,6 +127,8 @@ fun DashboardScreen(
             )
         }
     ) { paddingValues ->
+        val showLogoutDialog by authSharedViewModel.showLogoutDialog.collectAsState()
+
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
@@ -257,7 +263,34 @@ fun DashboardScreen(
                 Spacer(modifier = Modifier.height(16.dp))
             }
         }
+
+        if (showLogoutDialog) {
+            AlertDialog(
+                onDismissRequest = { authSharedViewModel.hideLogoutDialog() },
+                title = { Text("Cerrar sesión") },
+                text = { Text("¿Estás seguro que deseas cerrar sesión?") },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            authSharedViewModel.logout(navController)
+                        }
+                    ) {
+                        Text("Confirmar", color = ColorsTheme.primaryText)
+                    }
+                },
+                dismissButton = {
+                    TextButton(
+                        onClick = {
+                            authSharedViewModel.hideLogoutDialog()
+                        }
+                    ) {
+                        Text("Cancelar", color = ColorsTheme.secondaryText)
+                    }
+                }
+            )
+        }
     }
+
 }
 
 @Composable

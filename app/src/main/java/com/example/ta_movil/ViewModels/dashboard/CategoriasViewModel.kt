@@ -47,6 +47,8 @@ class CategoriasViewModel : ViewModel() {
     private var transactionsListener: ListenerRegistration? = null
 
     init {
+        // Inicializar categorías cuando el ViewModel se cree
+        initializeUserCategories()
         loadCategories()
     }
 
@@ -160,11 +162,11 @@ class CategoriasViewModel : ViewModel() {
     }
 
     fun initializeUserCategories() {
+        val userId = auth.currentUser?.uid ?: return
+        
+        // Verificar si el usuario ya tiene categorías
         viewModelScope.launch {
             try {
-                val userId = auth.currentUser?.uid ?: return@launch
-
-                // Verificar si el usuario ya tiene categorías
                 val userCategories = firestore
                     .collection("users")
                     .document(userId)
@@ -192,6 +194,9 @@ class CategoriasViewModel : ViewModel() {
                     }
 
                     batch.commit().await()
+                    
+                    // Recargar categorías después de inicializar
+                    loadCategories()
                 }
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(

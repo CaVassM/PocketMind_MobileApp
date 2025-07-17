@@ -24,6 +24,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.shape.CircleShape
@@ -34,12 +35,14 @@ import androidx.navigation.NavHostController
 import com.example.ta_movil.Additionals.ColorsTheme
 import com.example.ta_movil.Components.BottomNavigationBar
 import com.example.ta_movil.ViewModels.dashboard.Screen
+import com.example.ta_movil.ViewModels.dashboard.AuthSharedViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CategoriasScreen(
     viewModel: CategoriasViewModel = viewModel(),
-    navController: NavHostController
+    navController: NavHostController,
+    authSharedViewModel: AuthSharedViewModel
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var showErrorSnackbar by remember { mutableStateOf(false) }
@@ -80,10 +83,10 @@ fun CategoriasScreen(
                     }
                 },
                 actions = {
-                    IconButton(onClick = { /* Acción de compartir */ }) {
+                    IconButton(onClick = { authSharedViewModel.showLogoutDialog() }) {
                         Icon(
-                            Icons.Default.Share,
-                            contentDescription = "Compartir",
+                            imageVector = Icons.Default.ExitToApp,
+                            contentDescription = "Cerrar sesión",
                             tint = Color.White
                         )
                     }
@@ -97,7 +100,6 @@ fun CategoriasScreen(
             BottomNavigationBar(
                 currentScreen = viewModel.currentScreen,
                 onNavigate = { screen ->
-                    viewModel.navigateTo(screen)
                     when (screen) {
                         Screen.Dashboard -> navController.navigate("dashboard")
                         Screen.IngresosEgresos -> navController.navigate("ingresos_egresos")
@@ -193,6 +195,34 @@ fun CategoriasScreen(
                 }
             }
         }
+    }
+
+    // Diálogo de logout
+    val showLogoutDialog by authSharedViewModel.showLogoutDialog.collectAsState()
+    if (showLogoutDialog) {
+        AlertDialog(
+            onDismissRequest = { authSharedViewModel.hideLogoutDialog() },
+            title = { Text("Cerrar sesión") },
+            text = { Text("¿Estás seguro que deseas cerrar sesión?") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        authSharedViewModel.logout(navController)
+                    }
+                ) {
+                    Text("Confirmar", color = ColorsTheme.primaryText)
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        authSharedViewModel.hideLogoutDialog()
+                    }
+                ) {
+                    Text("Cancelar", color = ColorsTheme.secondaryText)
+                }
+            }
+        )
     }
 
     // Snackbar para mostrar errores

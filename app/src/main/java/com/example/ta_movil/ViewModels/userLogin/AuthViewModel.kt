@@ -4,6 +4,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
+import androidx.navigation.NavController
 import com.example.ta_movil.Model.pagesInit.LoginState
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
@@ -99,6 +100,13 @@ class AuthViewModel : ViewModel(){
         }
         else{
             state = state.copy(isLoginEnabled = false)
+        }
+    }
+
+    fun logout(navController: NavController) {
+        FirebaseAuth.getInstance().signOut()
+        navController.navigate("home") {
+            popUpTo("home") { inclusive = true }
         }
     }
 }
